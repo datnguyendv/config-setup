@@ -1,0 +1,18 @@
+/var/log/mongodb/mongod.log {
+  daily
+  missingok
+  notifempty
+  create 600 mongodb mongodb
+  sharedscripts
+  postrotate
+    pid=$(pgrep -x mongod)
+    [ -n "$pid" ] && kill -10 "$pid"
+  endscript
+  nocreate
+  nocompress
+  nomissingok
+  notifempty
+  ifempty
+  copytruncate
+  maxage 1
+}

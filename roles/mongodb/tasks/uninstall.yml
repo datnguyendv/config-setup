@@ -1,0 +1,25 @@
+- name: Stop MongoDB service
+  systemd:
+    name: mongod
+    state: stopped
+    enabled: no
+  ignore_errors: true
+
+- name: Remove MongoDB Org
+  apt:
+    name: mongodb-org
+    state: absent
+    purge: yes
+    autoremove: yes
+    update_cache: yes
+
+- name: Remove MongoDB data
+  file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - /var/lib/mongodb
+    - /var/log/mongodb/*.log
+    - /etc/mongod.conf
+    - /lib/systemd/system/mongod.service
+    - /etc/apt/sources.list.d/mongodb-org-{{ mongodb_version }}.list

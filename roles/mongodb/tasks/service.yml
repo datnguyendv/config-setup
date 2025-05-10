@@ -1,0 +1,15 @@
+- name: Deploy MongoDB systemd service
+  template:
+    src: mongod.service.j2
+    dest: /lib/systemd/system/mongod.service
+  notify: restart mongod
+
+- name: Reload systemd
+  systemd:
+    daemon_reload: yes
+
+- name: Enable and start MongoDB service
+  systemd:
+    name: mongod
+    enabled: yes
+    state: started

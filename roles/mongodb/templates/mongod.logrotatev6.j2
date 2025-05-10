@@ -1,0 +1,13 @@
+/var/log/mongodb/mongod.log {
+  daily
+  rotate 7
+  missingok
+  notifempty
+  postrotate
+    PID=$(pgrep -af mongod | grep -v grep | grep '/usr/bin/mongod --config /etc/mongod.conf' | awk '{print $1}')
+    if [ -n "$PID" ]; then
+      kill -10 "$PID"
+    fi  
+  endscript
+}
+
