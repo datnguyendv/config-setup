@@ -1,0 +1,19 @@
+- name: Install MongoDB
+  import_tasks: install.yml
+  tags: ["install"]
+
+- name: Configure MongoDB
+  import_tasks: config.yml
+  tags: ["install", "config"]
+
+- name: Manage MongoDB service
+  import_tasks: service.yml
+  tags: ["install"]
+
+- name: Configure Rotate Logs
+  import_tasks: rotate_config.yml
+  tags: ["install", "rotate"]
+
+- name: Uninstall MongoDB
+  import_tasks: uninstall.yml
+  tags: ["uninstall"]

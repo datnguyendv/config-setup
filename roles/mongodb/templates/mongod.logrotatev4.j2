@@ -1,0 +1,8 @@
+/var/log/mongodb/mongod.log {
+  daily
+  rotate 30
+  missingok
+  notifempty
+  create 600 mongodb mongodb
+  copytruncate
+}
