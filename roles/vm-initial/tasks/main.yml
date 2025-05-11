@@ -1,0 +1,65 @@
+# - name: Render payload.json for PUT action to consul server prod 
+#   template:
+#     src: payload.json.j2
+#     dest: /tmp/payload.json
+#
+# # Register this server to consul
+# - name: Register service to metric register server
+#   shell: curl --request PUT --data @/tmp/payload.json {{ vars['metric_register_' + env] }}/v1/agent/service/register
+
+- name: Disable sshguard
+  shell: |
+    systemctl stop sshguard.service || true
+    systemctl disable sshguard.service || true
+    
+- name: Set timezone {{ timezone }}
+  shell: sudo timedatectl set-timezone {{ timezone }}
+
+- name: install common pkg
+  apt:
+    name: "{{ item }}"
+  with_items:
+    - htop
+    - wget
+    - net-tools
+
+- name: templating /etc/hosts
+  template: 
+    src: hosts.j2
+    dest: /etc/hosts
+
+- name: templating /etc/hostname
+  template: 
+    src: hostname.j2
+    dest: /etc/hostname
+
+- name: change hostname immediately
+  command: /bin/hostname {{ hostname }}
+
+- name: templating /etc/security/limits.conf
+  template: 
+    src: limits.conf.j2
+    dest: /etc/security/limits.conf
+
+- name: templating /etc/sysctl.conf
+  template: 
+    src: sysctl.conf.j2
+    dest: /etc/sysctl.conf
+
+- name: apply sysctl immediately
+  command: /sbin/sysctl -p
+
+- name: update apt cache
+  apt: 
+    update_cache: yes
+
+- name: disable unattended-upgrades
+  shell: find /etc/apt/apt.conf.d/ -type f -exec sed  -i -e 's/Update-Package-Lists "1"/Update-Package-Lists "0"/g' -e 's/Unattended-Upgrade "1"/Unattended-Upgrade "0"/g' {} \;
+
+- name: mount attached disk
+  shell: |
+    echo y | mkfs.ext4 -m 0 -E lazy_itable_init=0,lazy_journal_init=0,discard {{ attached_disk }}
+    sudo mkdir -p {{ mount_point }}
+    echo "UUID=`sudo blkid -s UUID -o value {{ attached_disk }}` {{ mount_point }} ext4 discard,defaults,nofail 0 2" | sudo tee -a /etc/fstab 
+    sudo mount -a
+  when: mount_attached_disk

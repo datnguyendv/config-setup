@@ -1,0 +1,23 @@
+- name: Initial instance config
+  hosts: all
+  become: yes
+  roles:
+    - vm-initial
+
+- name: Install Docker
+  hosts: all
+  become: yes
+  roles:
+    - docker
+
+- name: Export metric
+  hosts: all
+  become: yes
+  roles:
+    - node-exporter
+
+# - name: Register metric monitor
+#   hosts: all
+#   become: yes
+#   roles:
+#     - metric-register
