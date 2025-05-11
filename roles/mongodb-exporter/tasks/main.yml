@@ -1,0 +1,11 @@
+- name: Run mongodb-exporter container
+  community.docker.docker_container:
+    name: mongodb-exporter
+    image: "{{ exporter_image_name }}:{{ exporter_image_version }}"
+    state: started
+    restart_policy: always
+    published_ports:
+      - "{{ exporter_port }}:9216"
+    env:
+      MONGODB_URI: "mongodb://{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}:{{ mongodb_port | default('27017') }}"
+

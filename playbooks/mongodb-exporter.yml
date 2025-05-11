@@ -1,0 +1,5 @@
+- name: Install and configure exporter for MongoDB
+  hosts: all
+  become: yes
+  roles:
+    - mongodb-exporter
