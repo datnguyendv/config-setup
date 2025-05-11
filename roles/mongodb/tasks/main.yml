@@ -1,19 +1,19 @@
 - name: Install MongoDB
-  import_tasks: install.yml
-  tags: ["install"]
+  include_tasks: install.yml
+  when: "'install' in action_env"
 
 - name: Configure MongoDB
-  import_tasks: config.yml
-  tags: ["install", "config"]
+  include_tasks: config.yml
+  when: "'config' in action_env or 'install' in action_env"
 
 - name: Manage MongoDB service
-  import_tasks: service.yml
-  tags: ["install"]
+  include_tasks: service.yml
+  when: "'install' in action_env"
 
 - name: Configure Rotate Logs
-  import_tasks: rotate_config.yml
-  tags: ["install", "rotate"]
+  include_tasks: rotate_config.yml
+  when: "'rotate' in action_env or 'install' in action_env"
 
 - name: Uninstall MongoDB
-  import_tasks: uninstall.yml
-  tags: ["uninstall"]
+  include_tasks: uninstall.yml
+  when: "'uninstall' in action_env"

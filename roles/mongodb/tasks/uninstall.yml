@@ -22,4 +22,4 @@
     - /var/log/mongodb/*.log
     - /etc/mongod.conf
     - /lib/systemd/system/mongod.service
-    - /etc/apt/sources.list.d/mongodb-org-{{ mongodb_version }}.list
+    - /etc/apt/sources.list.d/mongodb-org-{{ version }}.list
