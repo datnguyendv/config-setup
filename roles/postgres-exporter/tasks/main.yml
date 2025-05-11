@@ -1,0 +1,11 @@
+- name: Run postgres-exporter container
+  community.docker.docker_container:
+    name: postgres-exporter
+    image: "{{ exporter_image_name }}:{{ exporter_image_version }}"
+    state: started
+    restart_policy: always
+    published_ports:
+      - "{{ exporter_port }}:9187"
+    env:
+      DATA_SOURCE_NAME: "postgresql://postgres@{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}:{{ postgres_port | default('5432') }}/postgres?sslmode=disable"
+

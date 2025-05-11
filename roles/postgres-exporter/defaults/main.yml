@@ -1,0 +1,3 @@
+exporter_port: "9187"
+exporter_image_name: "prometheuscommunity/postgres-exporter"
+exporter_image_version: "0.17.0"
