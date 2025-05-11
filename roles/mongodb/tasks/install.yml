@@ -1,13 +1,13 @@
 - name: Add MongoDB APT key
   apt_key:
-    url: https://www.mongodb.org/static/pgp/server-{{ mongodb_version }}.asc
+    url: https://www.mongodb.org/static/pgp/server-{{ version }}.asc
     state: present
 
 - name: Add MongoDB APT repository
   apt_repository:
-    repo: "deb http://repo.mongodb.org/apt/ubuntu {{ ansible_distribution_release }}/mongodb-org/{{ mongodb_version }} multiverse"
+    repo: "deb http://repo.mongodb.org/apt/ubuntu {{ ansible_distribution_release }}/mongodb-org/{{ version }} multiverse"
     state: present
-    filename: "mongodb-org-{{ mongodb_version }}"
+    filename: "mongodb-org-{{ version }}"
 
 - name: Update apt cache
   apt:
