@@ -1,0 +1,2 @@
+exporter_image_name: "quay.io/prometheus/node-exporter"
+exporter_image_version: "v0.18.0"
