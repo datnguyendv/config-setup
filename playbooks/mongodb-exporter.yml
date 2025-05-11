@@ -1,0 +1,14 @@
+- name: Install and configure exporter for MongoDB
+  hosts: all
+  become: yes
+  roles:
+    - mongodb-exporter
+
+- name: Register to metric server
+  hosts: all
+  become: yes
+  roles:
+    - metric-register
+  vars:
+    consul_service_name: "mongo"
+    consul_service_port:  "9104"

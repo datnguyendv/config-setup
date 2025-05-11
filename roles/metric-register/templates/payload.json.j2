@@ -1,0 +1,10 @@
+{
+    "ID": "{{ hostname }}:{{ consul_service_port }}",
+    "Name": "{{ consul_service_name }}",
+    "Address": "{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}",
+    "Port": {{ consul_service_port }},
+    "Meta": {
+      "hostname": "{{ hostname }}",
+      "prometheus": "true"
+    }
+}

@@ -1,0 +1,6 @@
+metric_register_dev: "metric-register-dns"
+metric_register_uat: "metric-register-dns"
+metric_register_prod: "metric-register-dns"
+
+consul_service_name: "node-exporter"
+consul_service_port: "9889"

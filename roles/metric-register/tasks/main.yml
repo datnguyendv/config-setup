@@ -1,0 +1,9 @@
+#-Render Consul template
+- name: Render payload.json for PUT action to consul server prod 
+  template:
+    src: payload.json.j2
+    dest: /tmp/payload.json
+
+# Register metrics server to consul
+- name: Register service to metric register server
+  shell: curl --request PUT --data @/tmp/payload.json {{ vars['metric_register_' + env] }}/v1/agent/service/register

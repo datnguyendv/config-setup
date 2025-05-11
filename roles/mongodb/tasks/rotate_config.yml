@@ -1,4 +1,4 @@
 - name: Add MongoDB rotate log configuration
   template:
-    src: mongod.logrotatev4.j2
+    src: mongod.logrotate.j2
     dest: /etc/logrotate.d/mongod
