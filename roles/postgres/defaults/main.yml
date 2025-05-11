@@ -1,0 +1,4 @@
+postgres_admin_password: "admin123"
+postgres_user: "test01"
+postgres_user_password: "mypass123"
+postgres_database: "poc"

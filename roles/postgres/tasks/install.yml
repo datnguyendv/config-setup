@@ -1,0 +1,35 @@
+---
+- name: install dependencies
+  apt:
+    name: 
+      - acl
+      - python3-pip
+    state: present
+
+- name: install psycopg2
+  pip:
+    name: psycopg2-binary
+    state: present
+
+- name: Import the PostgreSQL signing key
+  apt_key:
+    url: https://www.postgresql.org/media/keys/ACCC4CF8.asc
+    state: present
+
+- name: Add PostgreSQL apt repository
+  apt_repository:
+    repo: "deb http://apt.postgresql.org/pub/repos/apt {{ ansible_distribution_release }}-pgdg main"
+    state: present
+    update_cache: true
+
+- name: Install PostgreSQL {{ postgres_version }} server and contrib packages
+  apt:
+    name:
+      - postgresql-{{ postgres_version }}
+      - postgresql-contrib-{{ postgres_version }}
+    state: present
+    
+- name: "Start and enable services"
+  service: "name={{ item }} state=started enabled=yes"
+  with_items:
+    - postgresql

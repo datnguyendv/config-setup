@@ -1,0 +1,42 @@
+- name: Stop PostgreSQL service
+  systemd:
+    name: postgresql
+    state: stopped
+    enabled: no
+  ignore_errors: yes
+
+- name: Remove PostgreSQL packages
+  apt:
+    name: "postgresql-{{ postgres_version }}"
+    state: absent
+    purge: yes
+    autoremove: yes
+
+- name: Remove PostgreSQL data directory
+  file:
+    path: "/var/lib/postgresql"
+    state: absent
+  become: true
+
+- name: Remove PostgreSQL config
+  file:
+    path: "/etc/postgresql"
+    state: absent
+  become: true
+
+- name: Remove PostgreSQL user
+  user:
+    name: postgres
+    state: absent
+    remove: yes
+  ignore_errors: yes
+
+- name: Remove repository and APT key
+  apt_repository:
+    repo: "deb http://apt.postgresql.org/pub/repos/apt {{ ansible_distribution_release }}-pgdg main"
+    state: absent
+
+- name: Remove PostgreSQL APT key
+  apt_key:
+    id: ACCC4CF8
+    state: absent

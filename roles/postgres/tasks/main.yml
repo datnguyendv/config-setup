@@ -1,0 +1,29 @@
+- name: Install Postgresql
+  include_tasks: install.yml
+  when: "'install' in action_env"
+
+- name: Configure default User
+  become: true
+  become_user: postgres
+  include_tasks: user_priv.yml
+  when: "'install' in action_env"
+
+- name: Configure Postgresql
+  include_tasks: config.yml
+  when: "'config' in action_env or 'install' in action_env"
+
+- name: Configure application User
+  become: true
+  become_user: postgres
+  include_tasks: users.yml
+  when: "'new_user' in action_env"
+
+- name: Configure application database
+  become: true
+  become_user: postgres
+  include_tasks: databases.yml
+  when: "'new_db' in action_env"
+
+- name: Uninstall Postgresql
+  include_tasks: uninstall.yml
+  when: "'uninstall' in action_env"

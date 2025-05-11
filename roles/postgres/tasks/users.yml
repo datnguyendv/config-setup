@@ -1,0 +1,6 @@
+- name: Create application user
+  postgresql_user:
+    name: "{{ postgres_user }}"
+    password: "{{ postgres_user_password }}"
+    state: present
+    login_user: postgres
