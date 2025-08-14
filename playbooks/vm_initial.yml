@@ -16,8 +16,8 @@
   roles:
     - node-exporter
 
-# - name: Register metric monitor
-#   hosts: all
-#   become: yes
-#   roles:
-#     - metric-register
+- name: Register metric monitor
+  hosts: all
+  become: yes
+  roles:
+    - metric-register
