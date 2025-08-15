@@ -1,0 +1,42 @@
+---
+- name: Wait for MongoDB service to start
+  wait_for:
+    port: "{{ mongodb_net_port }}"
+    host: "{{ mongodb_net_bindip if mongodb_net_bindip != '0.0.0.0' else '127.0.0.1' }}"
+    delay: 5
+    timeout: 60
+    state: started
+
+- name: Check MongoDB process
+  shell: pgrep -f mongod
+  register: mongod_process
+  failed_when: false
+  changed_when: false
+
+- name: Check MongoDB service status
+  systemd:
+    name: "{{ mongodb_service_name }}"
+  register: service_status
+
+- name: Test MongoDB connection (without auth)
+  shell: |
+    mongo --quiet --eval "db.runCommand('ping')"
+  register: connection_test_noauth
+  failed_when: false
+  changed_when: false
+  when: not mongodb_auth_enabled
+
+- name: Test MongoDB connection (with auth)
+  shell: |
+    mongo --quiet --eval "db.runCommand('ping')" -u "{{ mongodb_root_admin_name }}" -p "{{ mongodb_root_admin_password }}" --authenticationDatabase admin
+  register: connection_test_auth
+  failed_when: false
+  changed_when: false
+  when: mongodb_auth_enabled and mongodb_deployment_mode == "standalone"
+
+- name: Get MongoDB version
+  shell: |
+    mongo --quiet --eval "db.version()"
+  register: mongodb_version_check
+  failed_when: false
+  changed_when: false

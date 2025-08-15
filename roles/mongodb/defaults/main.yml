@@ -1,0 +1,55 @@
+# Deployment Mode Detection
+mongodb_deployment_mode: "standalone"
+mongodb_version: "6.0.5"
+mongodb_auto_detect_mode: true
+
+# Package Management
+mongodb_use_official_repo: true
+mongodb_package_version: "{{ mongodb_version }}"
+mongodb_major_version: "{{ mongodb_version.split('.')[0] }}.{{ mongodb_version.split('.')[1] }}"
+
+# Service Configuration
+mongodb_service_name: "mongod"
+mongodb_service_state: "started"
+mongodb_service_enabled: true
+
+# Network Configuration
+mongodb_net_bindip: "127.0.0.1"
+mongodb_net_port: 27017
+mongodb_net_maxincomingconnections: 65536
+
+# Storage Configuration
+mongodb_storage_dbpath: "/var/lib/mongodb"
+mongodb_storage_journal_enabled: true
+mongodb_storage_engine: "wiredTiger"
+mongodb_storage_directoryperdb: false
+
+# Security Configuration
+mongodb_auth_enabled: true
+mongodb_root_admin_name: "admin"
+mongodb_root_admin_password: "SecurePassword123!"
+mongodb_keyfile_path: "/etc/mongodb-keyfile"
+mongodb_keyfile_content: "your-very-long-random-key-here-minimum-6-characters"
+
+# Replica Set Configuration
+mongodb_replication_replsetname: "rs0"
+mongodb_replication_oplogsizemb: 1024
+
+# Sharded Cluster Configuration
+mongodb_config_server_port: 27019
+mongodb_config_server_replsetname: "configReplSet"
+mongodb_shard_port: 27018
+mongodb_mongos_port: 27017
+
+# Performance Tuning
+mongodb_wiredtiger_cache_size_gb: "{{ (ansible_memtotal_mb * 0.5) | int // 1024 }}"
+
+# Logging
+mongodb_systemlog_destination: "file"
+mongodb_systemlog_path: "/var/log/mongodb/mongod.log"
+mongodb_systemlog_logappend: true
+mongodb_systemlog_quiet: true
+
+# Process Management
+mongodb_processmanagement_fork: false
+mongodb_processmanagement_pidfilepath: "/var/run/mongodb/mongod.pid"

@@ -1,38 +1,81 @@
-# mongod.conf
+# MongoDB Configuration File
 
-# for documentation of all options, see:
-#   http://docs.mongodb.org/manual/reference/configuration-options/
-
-# Where and how to store data.
-storage:
-  dbPath: /var/lib/mongodb
-#  engine:
-#  wiredTiger:
-
-# where to write logging data.
-systemLog:
-  destination: file
-  logAppend: true
-  logRotate: reopen
-  path: /var/log/mongodb/mongod.log
-
-# network interfaces
+# Network interfaces
 net:
-  port: 27017
-  bindIp: 0.0.0.0
+  port: {{ mongodb_net_port }}
+  bindIp: {{ mongodb_net_bindip }}
+  maxIncomingConnections: {{ mongodb_net_maxincomingconnections }}
 
-# how the process runs
+# Process management
 processManagement:
-  timeZoneInfo: /usr/share/zoneinfo
+  fork: {{ mongodb_processmanagement_fork | lower }}
+  pidFilePath: {{ mongodb_processmanagement_pidfilepath }}
 
-#security:
+# Storage options
+storage:
+  dbPath: {{ mongodb_storage_dbpath }}
+  journal:
+    enabled: {{ mongodb_storage_journal_enabled | lower }}
+  engine: {{ mongodb_storage_engine }}
+{% if mongodb_storage_directoryperdb %}
+  directoryPerDB: {{ mongodb_storage_directoryperdb | lower }}
+{% endif %}
+  wiredTiger:
+    engineConfig:
+      cacheSizeGB: {{ mongodb_wiredtiger_cache_size_gb }}
 
-#operationProfiling:
+# System log
+systemLog:
+  destination: {{ mongodb_systemlog_destination }}
+  path: {{ mongodb_systemlog_path }}
+  logAppend: {{ mongodb_systemlog_logappend | lower }}
+  quiet: {{ mongodb_systemlog_quiet | lower }}
 
-#replication:
+{% if mongodb_auth_enabled %}
+# Security
+security:
+  authorization: enabled
+  {% if mongodb_deployment_mode in ['replica_set', 'sharded_cluster'] %}
+  keyFile: {{ mongodb_keyfile_path }}
+  {% endif %}
+{% endif %}
 
-#sharding:
+{% if mongodb_deployment_mode == 'replica_set' %}
+# Replication
+replication:
+  replSetName: {{ mongodb_replication_replsetname }}
+  oplogSizeMB: {{ mongodb_replication_oplogsizemb }}
+{% endif %}
 
-## Enterprise-Only Options:
+{% if mongodb_deployment_mode == 'sharded_cluster' %}
+  {% if inventory_hostname in groups.get('mongodb_config_servers', []) %}
+# Sharding - Config Server
+sharding:
+  clusterRole: configsvr
+replication:
+  replSetName: {{ mongodb_config_server_replsetname }}
 
-#auditLog:
+# Override port for config servers
+net:
+  port: {{ mongodb_config_server_port }}
+  bindIp: {{ mongodb_net_bindip }}
+  maxIncomingConnections: {{ mongodb_net_maxincomingconnections }}
+  {% elif inventory_hostname in groups.get('mongodb_shards', []) %}
+# Sharding - Shard Server
+sharding:
+  clusterRole: shardsvr
+replication:
+  replSetName: >-
+    {%- for group_name in group_names -%}
+      {%- if group_name.startswith('shard') -%}
+        {{ group_name }}ReplSet
+      {%- endif -%}
+    {%- endfor -%}
+
+# Override port for shard servers
+net:
+  port: {{ mongodb_shard_port }}
+  bindIp: {{ mongodb_net_bindip }}
+  maxIncomingConnections: {{ mongodb_net_maxincomingconnections }}
+  {% endif %}
+{% endif %}
