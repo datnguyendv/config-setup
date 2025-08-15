@@ -1,5 +1,9 @@
-- name: Install and configure MongoDB
+- name: Deploy MongoDB
   hosts: all
-  become: yes
+  become: true
+  vars:
+    mongodb_deployment_mode: "{{ deployment_mode | default('standalone') }}"
+    mongodb_version: "{{ mongo_version | default('6.0.5') }}"
+    mongodb_os_family: "{{ ansible_os_family }}"
   roles:
-    - mongodb
+    - role: mongodb
