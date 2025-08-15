@@ -27,9 +27,7 @@ mongodb_storage_directoryperdb: false
 # Security Configuration
 mongodb_auth_enabled: true
 mongodb_root_admin_name: "admin"
-mongodb_root_admin_password: "SecurePassword123!"
 mongodb_keyfile_path: "/etc/mongodb-keyfile"
-mongodb_keyfile_content: "your-very-long-random-key-here-minimum-6-characters"
 
 # Replica Set Configuration
 mongodb_replication_replsetname: "rs0"
