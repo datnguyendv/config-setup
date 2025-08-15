@@ -1,7 +1,7 @@
 # Include OS-specific variables
 - name: Include OS-specific variables
   include_vars: "{{ mongodb_os_family }}.yml"
-  failed_when: true
+  failed_when: mongodb_os_family not in ['Debian', 'RedHat']
 
 # Core installation and configuration
 - name: Mongodb installation

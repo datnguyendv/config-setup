@@ -8,6 +8,9 @@ mongodb_packages:
   - "mongodb-org-shell={{ mongodb_package_version }}"
   - "mongodb-org-mongos={{ mongodb_package_version }}"
   - "mongodb-org-tools={{ mongodb_package_version }}"
+  - "mongodb-org-database={{ mongodb_package_version }}"
+  - "mongodb-mongosh"
+  - "mongodb-org-database-tools-extra={{ mongodb_package_version }}"
 
 mongodb_python_packages:
   - python3-pip

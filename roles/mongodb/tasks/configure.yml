@@ -1,0 +1,62 @@
+---
+- name: Generate MongoDB configuration file
+  template:
+    src: mongod.conf.j2
+    dest: /etc/mongod.conf
+    owner: root
+    group: root
+    mode: '0644'
+    backup: true
+  notify: restart mongod
+
+- name: Generate Mongos configuration file
+  template:
+    src: mongos.conf.j2
+    dest: /etc/mongos.conf
+    owner: root
+    group: root
+    mode: '0644'
+  when:
+    - mongodb_deployment_mode == "sharded_cluster"
+    - inventory_hostname in groups.get('mongodb_mongos', [])
+  notify: restart mongos
+
+- name: Create mongos systemd service file
+  copy:
+    content: |
+      [Unit]
+      Description=MongoDB Router (mongos)
+      After=network.target
+      Documentation=https://docs.mongodb.org/manual
+
+      [Service]
+      User=mongodb
+      Group=mongodb
+      ExecStart=/usr/bin/mongos --config /etc/mongos.conf
+      ExecReload=/bin/kill -HUP $MAINPID
+      Restart=always
+      RestartSec=10
+      StandardOutput=syslog
+      StandardError=syslog
+      KillMode=mixed
+      KillSignal=SIGINT
+      TimeoutStopSec=5
+      PrivateTmp=true
+
+      [Install]
+      WantedBy=multi-user.target
+    dest: /etc/systemd/system/mongos.service
+    owner: root
+    group: root
+    mode: '0644'
+  when:
+    - mongodb_deployment_mode == "sharded_cluster"
+    - inventory_hostname in groups.get('mongodb_mongos', [])
+  notify: reload systemd
+
+- name: Set correct service name for mongos
+  set_fact:
+    mongodb_service_name: "mongos"
+  when:
+    - mongodb_deployment_mode == "sharded_cluster"
+    - inventory_hostname in groups.get('mongodb_mongos', [])
