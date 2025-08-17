@@ -14,7 +14,7 @@ mongodb_service_state: "started"
 mongodb_service_enabled: true
 
 # Network Configuration
-mongodb_net_bindip: "127.0.0.1"
+mongodb_net_bindip: "0.0.0.0"
 mongodb_net_port: 27017
 mongodb_net_maxincomingconnections: 65536
 
@@ -25,7 +25,6 @@ mongodb_storage_engine: "wiredTiger"
 mongodb_storage_directoryperdb: false
 
 # Security Configuration
-mongodb_auth_enabled: true
 mongodb_root_admin_name: "admin"
 mongodb_keyfile_path: "/etc/mongodb-keyfile"
 

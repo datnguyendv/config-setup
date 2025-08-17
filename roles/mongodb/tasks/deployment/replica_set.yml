@@ -1,0 +1,95 @@
+---
+- name: Configure replica set deployment
+  debug:
+    msg: "Configuring MongoDB replica set: {{ mongodb_replication_replsetname }}"
+  notify: start mongod
+
+- meta: flush_handlers
+
+- name: Build replica set members list
+  set_fact:
+    replica_set_members: >-
+      {%- set members = [] -%}
+      {%- for host in groups['mongodb_replica_set'] -%}
+        {%- set hostname = hostvars[host].get('ansible_host', host) -%}
+        {%- set member = {
+          'host': hostname ~ ':' ~ (mongodb_net_port | string),
+          'priority': hostvars[host].get('member_priority', 1)
+        } -%}
+        {%- set _ = members.append(member) -%}
+      {%- endfor -%}
+      {{ members }}
+  run_once: true
+
+- name: Check if replica set is already initialized
+  shell: |
+    mongosh --quiet --eval "rs.status().ok" 2>/dev/null || echo "0"
+  register: rs_status_check
+  failed_when: false
+  changed_when: false
+  run_once: true
+  delegate_to: "{{ groups['mongodb_replica_set'][0] }}"
+
+- name: Initialize replica set
+  shell: |
+    mongosh --eval "
+    rs.initiate({
+      _id: '{{ mongodb_replication_replsetname }}',
+      members: [
+        {% for member in replica_set_members %}
+        {
+          _id: {{ loop.index0 }},
+          host: '{{ member.host }}',
+          priority: {{ member.priority }}
+        }{% if not loop.last %},{% endif %}
+        {% endfor %}
+      ]
+    })
+    "
+  when: rs_status_check.stdout == "0"
+  run_once: true
+  delegate_to: "{{ groups['mongodb_replica_set'][0] }}"
+
+- name: Wait for replica set to stabilize
+  shell: |
+    mongosh --quiet --eval "
+    var status = rs.status();
+    if (status.ok == 1) {
+      var primary = status.members.find(m => m.state == 1);
+      print(primary ? 'PRIMARY_READY' : 'WAITING');
+    } else {
+      print('NOT_READY');
+    }
+    "
+  register: rs_ready_check
+  until: rs_ready_check.stdout == "PRIMARY_READY"
+  retries: 30
+  delay: 10
+  run_once: true
+  delegate_to: "{{ groups['mongodb_replica_set'][0] }}"
+
+- name: Create admin user on primary
+  shell: |
+    mongosh admin --eval "
+      db.createUser({
+        user: '{{ mongodb_root_admin_name }}',
+        pwd: '{{ mongodb_root_admin_password }}',
+        roles: ['root']
+      });
+    "
+  when:
+    - rs_ready_check.stdout == "PRIMARY_READY"
+  run_once: true
+  delegate_to: "{{ groups['mongodb_replica_set'][0] }}"
+
+- name: Display replica set status
+  shell: |
+    mongosh -u {{ mongodb_root_admin_name }} -p {{ mongodb_root_admin_password }} --quiet --eval "printjson(rs.status())"
+  register: final_rs_status
+  run_once: true
+  delegate_to: "{{ groups['mongodb_replica_set'][0] }}"
+
+- name: Show replica set configuration
+  debug:
+    msg: "Replica set {{ mongodb_replication_replsetname }} initialized with {{ replica_set_members | length }} members"
+  run_once: true

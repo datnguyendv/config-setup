@@ -1,0 +1,18 @@
+---
+- name: Create keyFile for replica set authentication
+  template:
+    src: keyFile.j2
+    dest: "{{ mongodb_keyfile_path }}"
+    owner: mongodb
+    group: mongodb
+    mode: '0400'
+  when: mongodb_deployment_mode in ['replica_set', 'sharded_cluster']
+  notify: restart mongod
+
+- name: Ensure keyFile permissions are correct
+  file:
+    path: "{{ mongodb_keyfile_path }}"
+    owner: mongodb
+    group: mongodb
+    mode: '0400'
+  when: mongodb_deployment_mode in ['replica_set', 'sharded_cluster']
