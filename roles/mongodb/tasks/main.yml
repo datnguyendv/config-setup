@@ -9,7 +9,6 @@
 
 - name: Config security
   import_tasks: security.yml
-  when: mongodb_auth_enabled | bool
 
 - name: Mongodb Configuration
   import_tasks: configure.yml
@@ -30,12 +29,3 @@
 
 - name: Final validation
   import_tasks: validate.yml
-
-# Start services
-- name: Start and enable MongoDB service
-  systemd:
-    name: "{{ mongodb_service_name }}"
-    state: "{{ mongodb_service_state }}"
-    enabled: "{{ mongodb_service_enabled }}"
-    daemon_reload: true
-  notify: restart mongod
