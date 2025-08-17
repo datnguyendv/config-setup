@@ -14,7 +14,7 @@ mongodb_service_state: "started"
 mongodb_service_enabled: true
 
 # Network Configuration
-mongodb_net_bindip: "127.0.0.1"
+mongodb_net_bindip: "0.0.0.0"
 mongodb_net_port: 27017
 mongodb_net_maxincomingconnections: 65536
 
