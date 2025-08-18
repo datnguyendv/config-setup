@@ -24,7 +24,7 @@
     "
   register: admin_user_result
   changed_when: "'{ oke: 1 }' in admin_user_result.stdout"
-  # when: mongodb_auth_enabled | bool
+  when: mongodb_auth_enabled | bool
 
 - name: Display standalone setup result
   debug:

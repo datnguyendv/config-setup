@@ -28,6 +28,8 @@ systemLog:
   logAppend: {{ mongodb_systemlog_logappend | lower }}
   quiet: {{ mongodb_systemlog_quiet | lower }}
 
+{% if mongodb_auth_enabled %}
 # Security
 security:
   authorization: enabled
+{% endif %}

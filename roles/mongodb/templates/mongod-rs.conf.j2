@@ -29,13 +29,14 @@ systemLog:
   logAppend: {{ mongodb_systemlog_logappend | lower }}
   quiet: {{ mongodb_systemlog_quiet | lower }}
 
+{% if mongodb_auth_enabled %}
 # Security
 security:
   authorization: enabled
   keyFile: {{ mongodb_keyfile_path }}
+{% endif %}
 
 # Replication
 replication:
   replSetName: {{ mongodb_replication_replsetname }}
   oplogSizeMB: {{ mongodb_replication_oplogsizemb }}
-
