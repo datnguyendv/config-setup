@@ -1,19 +1,31 @@
-- name: Install MongoDB
-  include_tasks: install.yml
-  when: "'install' in action_env"
+# Include OS-specific variables
+- name: Include OS-specific variables
+  include_vars: "{{ mongodb_os_family }}.yml"
+  failed_when: mongodb_os_family not in ['Debian', 'RedHat']
 
-- name: Configure MongoDB
-  include_tasks: config.yml
-  when: "'config' in action_env or 'install' in action_env"
+# Core installation and configuration
+- name: Mongodb installation
+  import_tasks: install.yml
 
-- name: Manage MongoDB service
-  include_tasks: service.yml
-  when: "'install' in action_env"
+- name: Config security
+  import_tasks: security.yml
 
-- name: Configure Rotate Logs
-  include_tasks: rotate_config.yml
-  when: "'rotate' in action_env or 'install' in action_env"
+- name: Mongodb Configuration
+  import_tasks: configure.yml
 
-- name: Uninstall MongoDB
-  include_tasks: uninstall.yml
-  when: "'uninstall' in action_env"
+# Deployment-specific configuration
+- name: Deploy standalone mode
+  import_tasks: deployment/standalone.yml
+  when: mongodb_deployment_mode == "standalone"
+
+- name: Deploy replica_set mode
+  import_tasks: deployment/replica_set.yml
+  when:
+    - mongodb_deployment_mode == "replica_set"
+
+- name: Deploy sharded_cluster mode
+  import_tasks: deployment/sharded_cluster.yml
+  when: mongodb_deployment_mode == "sharded_cluster"
+
+- name: Final validation
+  import_tasks: validate.yml

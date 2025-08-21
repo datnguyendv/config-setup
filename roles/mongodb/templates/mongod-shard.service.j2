@@ -1,0 +1,21 @@
+[Unit]
+Description=MongoDB Shard Server - {{ current_shard_group }}
+Documentation=https://docs.mongodb.org/manual
+After=network.target
+
+[Service]
+User=mongodb
+Group=mongodb
+ExecStart=/usr/bin/mongod --config /etc/mongod-{{ current_shard_group }}.conf
+ExecReload=/bin/kill -HUP $MAINPID
+Restart=always
+RestartSec=10
+StandardOutput=syslog
+StandardError=syslog
+KillMode=mixed
+KillSignal=SIGINT
+TimeoutStopSec=5
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

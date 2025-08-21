@@ -1,0 +1,65 @@
+---
+- name: Generate MongoDB configuration file (Standalone)
+  template:
+    src: mongod-standalone.conf.j2
+    dest: /etc/mongod.conf
+    owner: root
+    group: root
+    mode: '0644'
+    backup: true
+  when: mongodb_deployment_mode == "standalone"
+  notify: restart mongod
+
+- name: Generate MongoDB configuration file (Replica Set)
+  template:
+    src: mongod-rs.conf.j2
+    dest: /etc/mongod.conf
+    owner: root
+    group: root
+    mode: '0644'
+    backup: true
+  when: mongodb_deployment_mode == "replica_set"
+  notify: restart mongod
+
+- name: Generate MongoDB configuration file (Config Server)
+  template:
+    src: mongod-config-svr.conf.j2
+    dest: /etc/mongod-config.conf
+    owner: root
+    group: root
+    mode: '0644'
+    backup: true
+  when:
+    - mongodb_deployment_mode == "sharded_cluster"
+    - inventory_hostname in groups.get('mongodb_config_servers', [])
+  notify: restart mongod config
+
+- name: Generate MongoDB configuration file (Shard Server)
+  template:
+    src: mongod-shard.conf.j2
+    dest: /etc/mongod-{{ current_shard_group }}.conf
+    owner: root
+    group: root
+    mode: '0644'
+    backup: true
+  when:
+    - mongodb_deployment_mode == "sharded_cluster"
+    - inventory_hostname in groups.get('mongodb_shards', [])
+  notify: restart mongod {{ current_shard_group }}
+
+- name: Generate Mongos configuration file
+  template:
+    src: mongos.conf.j2
+    dest: /etc/mongos.conf
+    owner: root
+    group: root
+    mode: '0644'
+    backup: true
+  when:
+    - mongodb_deployment_mode == "sharded_cluster"
+    - inventory_hostname in groups.get('mongodb_mongos', [])
+  notify: restart mongos
+
+- name: Create systemd service files for sharded cluster
+  include_tasks: create_systemd_services.yml
+  when: mongodb_deployment_mode == "sharded_cluster"

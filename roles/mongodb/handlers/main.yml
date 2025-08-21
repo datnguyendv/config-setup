@@ -2,3 +2,28 @@
   systemd:
     name: mongod
     state: restarted
+    enabled: true
+    daemon_reload: true
+
+- name: restart mongos
+  systemd:
+    name: mongos
+    state: restarted
+    enabled: true
+    daemon_reload: true
+
+- name: reload systemd
+  systemd:
+    daemon_reload: true
+
+- name: start mongod
+  systemd:
+    name: mongod
+    state: started
+    enabled: true
+
+- name: start mongos
+  systemd:
+    name: mongos
+    state: started
+    enabled: true

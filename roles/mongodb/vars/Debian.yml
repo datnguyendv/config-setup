@@ -1,0 +1,17 @@
+mongodb_repo_url: "https://repo.mongodb.org/apt/{{ ansible_distribution | lower }}"
+mongodb_repo_key: "https://www.mongodb.org/static/pgp/server-{{ mongodb_major_version }}.asc"
+mongodb_repo: "deb [ arch=amd64,arm64 ] {{ mongodb_repo_url }} {{ ansible_distribution_release }}/mongodb-org/{{ mongodb_major_version }} multiverse"
+
+mongodb_packages:
+  - "mongodb-org={{ mongodb_package_version }}"
+  - "mongodb-org-server={{ mongodb_package_version }}"
+  - "mongodb-org-shell={{ mongodb_package_version }}"
+  - "mongodb-org-mongos={{ mongodb_package_version }}"
+  - "mongodb-org-tools={{ mongodb_package_version }}"
+  - "mongodb-org-database={{ mongodb_package_version }}"
+  - "mongodb-mongosh"
+  - "mongodb-org-database-tools-extra={{ mongodb_package_version }}"
+
+mongodb_python_packages:
+  - python3-pip
+  - python3-pymongo

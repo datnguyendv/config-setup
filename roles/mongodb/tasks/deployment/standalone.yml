@@ -1,0 +1,31 @@
+---
+- name: Configure standalone MongoDB
+  debug:
+    msg: "Configuring MongoDB in standalone mode"
+  notify: start mongod
+
+- meta: flush_handlers
+
+- name: Wait for MongoDB to start (standalone)
+  wait_for:
+    port: "{{ mongodb_net_port }}"
+    host: "{{ mongodb_net_bindip if mongodb_net_bindip != '0.0.0.0' else '127.0.0.1' }}"
+    delay: 5
+    timeout: 60
+
+- name: Create admin user (standalone)
+  shell: |
+    mongosh admin --eval "
+      db.createUser({
+        user: '{{ mongodb_root_admin_name }}',
+        pwd: '{{ mongodb_root_admin_password }}',
+        roles: ['root']
+      });
+    "
+  register: admin_user_result
+  changed_when: "'{ oke: 1 }' in admin_user_result.stdout"
+  when: mongodb_auth_enabled | bool
+
+- name: Display standalone setup result
+  debug:
+    msg: "MongoDB standalone deployment completed successfully"

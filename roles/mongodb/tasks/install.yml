@@ -1,20 +1,94 @@
-- name: Add MongoDB APT key
+---
+- name: Update package cache (Debian/Ubuntu)
+  apt:
+    update_cache: true
+    cache_valid_time: 3600
+  when: mongodb_os_family == "Debian"
+
+- name: Install required packages (Debian/Ubuntu)
+  apt:
+    name:
+      - gnupg
+      - curl
+      - software-properties-common
+    state: present
+  when: mongodb_os_family == "Debian"
+
+- name: Install required packages (RedHat/CentOS)
+  yum:
+    name:
+      - curl
+      - gnupg2
+    state: present
+  when: mongodb_os_family == "RedHat"
+
+- name: Add MongoDB official GPG key (Debian/Ubuntu)
   apt_key:
-    url: https://www.mongodb.org/static/pgp/server-{{ version }}.asc
+    url: "{{ mongodb_repo_key }}"
     state: present
+  when: mongodb_os_family == "Debian" and mongodb_use_official_repo
 
-- name: Add MongoDB APT repository
+- name: Add MongoDB repository (Debian/Ubuntu)
   apt_repository:
-    repo: "deb http://repo.mongodb.org/apt/ubuntu {{ ansible_distribution_release }}/mongodb-org/{{ version }} multiverse"
+    repo: "{{ mongodb_repo }}"
     state: present
-    filename: "mongodb-org-{{ version }}"
+    update_cache: true
+  when: mongodb_os_family == "Debian" and mongodb_use_official_repo
 
-- name: Update apt cache
-  apt:
-    update_cache: yes
+- name: Add MongoDB repository (RedHat/CentOS)
+  yum_repository:
+    name: "mongodb-org-{{ mongodb_major_version }}"
+    description: "MongoDB Repository"
+    baseurl: "{{ mongodb_repo_url }}"
+    gpgcheck: 1
+    enabled: 1
+    gpgkey: "{{ mongodb_repo_key }}"
+  when: mongodb_os_family == "RedHat" and mongodb_use_official_repo
 
-- name: Install MongoDB
+- name: Install MongoDB packages (Debian/Ubuntu)
   apt:
-    name: mongodb-org
+    name: "{{ mongodb_packages }}"
+    state: present
+    update_cache: true
+  when: mongodb_os_family == "Debian"
+
+- name: Install MongoDB packages (RedHat/CentOS)
+  yum:
+    name: "{{ mongodb_packages }}"
+    state: present
+  when: mongodb_os_family == "RedHat"
+
+- name: Install Python packages for MongoDB management
+  pip:
+    name: pymongo
     state: present
 
+- name: Create MongoDB user
+  user:
+    name: mongodb
+    system: true
+    shell: /bin/false
+    home: "{{ mongodb_storage_dbpath }}"
+    createhome: false
+    state: present
+
+- name: Create MongoDB directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: mongodb
+    group: mongodb
+    mode: '0755'
+  loop:
+    - "{{ mongodb_storage_dbpath }}"
+    - /var/log/mongodb
+    - /var/run/mongodb
+    - /etc/mongodb
+
+- name: Ensure MongoDB log file exists
+  file:
+    path: /var/log/mongodb/mongod.log
+    state: touch
+    owner: mongodb
+    group: mongodb
+    mode: '0644'
