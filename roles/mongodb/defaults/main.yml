@@ -25,6 +25,7 @@ mongodb_storage_engine: "wiredTiger"
 mongodb_storage_directoryperdb: false
 
 # Security Configuration
+mongodb_auth_enabled: true
 mongodb_root_admin_name: "admin"
 mongodb_keyfile_path: "/etc/mongodb-keyfile"
 

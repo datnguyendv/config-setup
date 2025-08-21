@@ -18,13 +18,21 @@
     name: "{{ mongodb_service_name }}"
   register: service_status
 
+- name: Test MongoDB connection (without auth)
+  shell: |
+    mongo --quiet --eval "db.runCommand('ping')"
+  register: connection_test_noauth
+  failed_when: false
+  changed_when: false
+  when: not mongodb_auth_enabled
+
 - name: Test MongoDB connection (with auth)
   shell: |
     mongo --quiet --eval "db.runCommand('ping')" -u "{{ mongodb_root_admin_name }}" -p "{{ mongodb_root_admin_password }}" --authenticationDatabase admin
   register: connection_test_auth
   failed_when: false
   changed_when: false
-  when: mongodb_deployment_mode == "standalone"
+  when: mongodb_auth_enabled and mongodb_deployment_mode == "standalone"
 
 - name: Get MongoDB version
   shell: |
