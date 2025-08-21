@@ -1,0 +1,29 @@
+# MongoDB Mongos Configuration File
+
+# Network interfaces
+net:
+  port: {{ mongodb_mongos_port }}
+  bindIp: {{ mongodb_net_bindip }}
+  maxIncomingConnections: {{ mongodb_net_maxincomingconnections }}
+
+# Process management
+processManagement:
+  fork: {{ mongodb_processmanagement_fork | lower }}
+  pidFilePath: /var/run/mongodb/mongos.pid
+
+# System log
+systemLog:
+  destination: {{ mongodb_systemlog_destination }}
+  path: /var/log/mongodb/mongos.log
+  logAppend: {{ mongodb_systemlog_logappend | lower }}
+  quiet: {{ mongodb_systemlog_quiet | lower }}
+
+# Sharding configuration
+sharding:
+  configDB: {{ mongodb_config_server_replsetname }}/{% for host in groups['mongodb_config_servers'] %}{{ hostvars[host]['ansible_host'] }}:{{ mongodb_config_server_port }}{% if not loop.last %},{% endif %}{% endfor %}
+
+{% if mongodb_auth_enabled %}
+# Security
+security:
+  keyFile: {{ mongodb_keyfile_path }}
+{% endif %}

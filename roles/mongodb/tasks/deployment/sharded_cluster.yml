@@ -1,0 +1,126 @@
+---
+- name: Configure sharded cluster deployment
+  debug:
+    msg: "Configuring MongoDB sharded cluster"
+
+# Config Server Configuration
+- name: Configure config servers (config-svr)
+  when: inventory_hostname in groups['mongodb_config_servers']
+  block:
+    - name: Build config server members list
+      set_fact:
+        config_server_members: >-
+          {%- set members = [] -%}
+          {%- for host in groups['mongodb_config_servers'] -%}
+            {%- set member = hostvars[host]['ansible_host'] + ':' + (mongodb_config_server_port | string) -%}
+            {%- set _ = members.append(member) -%}
+          {%- endfor -%}
+          {{ members }}
+      run_once: true
+
+    - name: Wait for config servers to start
+      wait_for:
+        port: "{{ mongodb_config_server_port }}"
+        host: "{{ hostvars[item]['ansible_host'] }}"
+        delay: 5
+        timeout: 60
+      loop: "{{ groups['mongodb_config_servers'] }}"
+      delegate_to: localhost
+
+    - name: Initialize config server replica set
+      shell: |
+        mongosh --port {{ mongodb_config_server_port }} --eval "
+        rs.initiate({
+          _id: '{{ mongodb_config_server_replsetname }}',
+          configsvr: true,
+          members: [
+            {% for member in config_server_members %}
+            { _id: {{ loop.index0 }}, host: '{{ member }}' }{% if not loop.last %},{% endif %}
+            {% endfor %}
+          ]
+        })
+        "
+      when: inventory_hostname == groups['mongodb_config_servers'][0]
+      run_once: true
+
+
+# Shard Configuration
+- name: Configure shard servers
+  when:
+    - inventory_hostname in groups['mongodb_shards']
+    - current_shard_group is defined
+  block:
+    - name: Determine current shard group
+      set_fact:
+        current_shard_group: >-
+          {%- for group_name in group_names -%}
+            {%- if group_name.startswith('shard') -%}
+              {{ group_name }}
+            {%- endif -%}
+          {%- endfor -%}
+
+    - name: Build shard members list
+      set_fact:
+        shard_members: >-
+          {%- set members = [] -%}
+          {%- for host in groups[current_shard_group] -%}
+            {%- set member = hostvars[host]['ansible_host'] + ':' + (mongodb_shard_port | string) -%}
+            {%- set _ = members.append(member) -%}
+          {%- endfor -%}
+          {{ members }}
+
+    - name: Initialize shard replica set
+      shell: |
+        mongosh --port {{ mongodb_shard_port }} --eval "
+        rs.initiate({
+          _id: '{{ current_shard_group }}ReplSet',
+          members: [
+            {% for member in shard_members %}
+            { _id: {{ loop.index0 }}, host: '{{ member }}' }{% if not loop.last %},{% endif %}
+            {% endfor %}
+          ]
+        })
+        "
+      when: inventory_hostname == groups[current_shard_group][0]
+
+# Mongos Configuration
+- name: Configure mongos routers
+  when: inventory_hostname in groups['mongodb_mongos']
+  block:
+    - name: Wait for mongos to start
+      wait_for:
+        port: "{{ mongodb_mongos_port }}"
+        host: "{{ hostvars[item]['ansible_host'] }}"
+        delay: 5
+        timeout: 60
+      loop: "{{ groups['mongodb_mongos'] }}"
+      delegate_to: localhost
+
+    - name: Add shards to cluster
+      shell: |
+        mongosh --port {{ mongodb_mongos_port }} --eval "
+        {% for group_name in groups.keys() %}
+        {% if group_name.startswith('shard') %}
+        {% set shard_hosts = [] %}
+        {% for host in groups[group_name] %}
+        {% set _ = shard_hosts.append(hostvars[host]['ansible_host'] + ':' + (mongodb_shard_port | string)) %}
+        {% endfor %}
+        sh.addShard('{{ group_name }}ReplSet/{{ shard_hosts | join(',') }}');
+        {% endif %}
+        {% endfor %}
+        "
+      when: inventory_hostname == groups['mongodb_mongos'][0]
+      run_once: true
+
+
+- name: Display sharded cluster status
+  shell: |
+    mongosh --port {{ mongodb_mongos_port }} --eval "sh.status()"
+  register: cluster_status
+  when: inventory_hostname == groups['mongodb_mongos'][0]
+  run_once: true
+
+- name: Show cluster configuration
+  debug:
+    msg: "Sharded cluster configuration completed"
+  run_once: true

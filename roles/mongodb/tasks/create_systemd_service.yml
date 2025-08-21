@@ -1,0 +1,30 @@
+---
+- name: Create systemd service for config server
+  template:
+    src: mongod-config.service.j2
+    dest: /etc/systemd/system/mongod-config.service
+    owner: root
+    group: root
+    mode: '0644'
+  when: inventory_hostname in groups.get('mongodb_config_servers', [])
+  notify: reload systemd
+
+- name: Create systemd service for shard server
+  template:
+    src: mongod-shard.service.j2
+    dest: /etc/systemd/system/mongod-{{ current_shard_group }}.service
+    owner: root
+    group: root
+    mode: '0644'
+  when: inventory_hostname in groups.get('mongodb_shards', [])
+  notify: reload systemd
+
+- name: Create systemd service for mongos
+  template:
+    src: mongos.service.j2
+    dest: /etc/systemd/system/mongos.service
+    owner: root
+    group: root
+    mode: '0644'
+  when: inventory_hostname in groups.get('mongodb_mongos', [])
+  notify: reload systemd
