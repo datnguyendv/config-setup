@@ -1,0 +1,38 @@
+[Unit]
+Description=Redis In-Memory Data Store - {{ item.name }}
+Documentation=https://redis.io/documentation
+After=network.target
+Wants=network-online.target
+
+[Service]
+Type=notify
+User={{ redis_user }}
+Group={{ redis_group }}
+ExecStart={{ redis_binary_path }} {{ redis_base_dir }}/{{ item.name }}/configs/redis.conf
+ExecStop={{ redis_cli_path }} -p {{ item.port }} shutdown
+ExecReload=/bin/kill -USR2 $MAINPID
+TimeoutStartSec=0
+TimeoutStopSec=0
+Restart=always
+RestartSec=3
+LimitNOFILE=65536
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths={{ redis_base_dir }}/{{ item.name }}
+ReadWritePaths={{ redis_log_dir }}
+ReadWritePaths={{ redis_run_dir }}
+
+# Working directory
+WorkingDirectory={{ redis_base_dir }}/{{ item.name }}
+
+# Environment
+Environment=REDIS_CONFIG={{ redis_base_dir }}/{{ item.name }}/configs/redis.conf
+
+[Install]
+WantedBy=multi-user.target
+

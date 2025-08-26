@@ -1,0 +1,12 @@
+redis_package: redis
+redis_service: redis
+redis_config_dir: /etc
+redis_binary_path: /usr/bin/redis-server
+redis_cli_path: /usr/bin/redis-cli
+
+required_packages:
+  - redis
+  - python3-redis
+
+epel_packages:
+  - epel-release

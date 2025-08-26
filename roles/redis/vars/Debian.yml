@@ -1,0 +1,10 @@
+redis_package: redis-server
+redis_service: redis-server
+redis_config_dir: /etc/redis
+redis_binary_path: /usr/bin/redis-server
+redis_cli_path: /usr/bin/redis-cli
+
+required_packages:
+  - redis-server
+  - redis-tools
+  - python3-redis

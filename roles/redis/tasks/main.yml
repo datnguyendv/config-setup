@@ -1,0 +1,145 @@
+---
+# Include OS-specific variables
+- name: Include OS-specific variables
+  include_vars: "{{ ansible_os_family }}.yml"
+
+# Pre-installation tasks
+- name: Create Redis group
+  group:
+    name: "{{ redis_group }}"
+    state: present
+
+- name: Create Redis user
+  user:
+    name: "{{ redis_user }}"
+    group: "{{ redis_group }}"
+    system: true
+    shell: /bin/false
+    home: "{{ redis_base_dir }}"
+    create_home: false
+    state: present
+
+# Install Redis - Debian/Ubuntu
+- name: Install Redis on Debian/Ubuntu
+  when: ansible_os_family == "Debian"
+  block:
+    - name: Update apt cache
+      apt:
+        update_cache: true
+    - name: Install Redis packages (Debian/Ubuntu)
+      apt:
+        name: "{{ required_packages }}"
+        state: present
+
+# Install Redis - RedHat/CentOS
+- name: Install Redis on RedHat/CentOS
+  when: ansible_os_family == "RedHat"
+  block:
+    - name: Install EPEL repository
+      yum:
+        name: "{{ epel_packages }}"
+        state: present
+    - name: Install Redis packages (RedHat/CentOS)
+      yum:
+        name: "{{ required_packages }}"
+        state: present
+
+# Stop default Redis service
+- name: Stop and disable default Redis services
+  systemd:
+    name: "{{ item }}"
+    state: stopped
+    enabled: false
+  ignore_errors: true
+  loop:
+    - redis
+    - redis-server
+
+# Create directory structure
+- name: Create Redis base directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ redis_user }}"
+    group: "{{ redis_group }}"
+    mode: "{{ redis_dir_mode }}"
+  loop:
+    - "{{ redis_base_dir }}"
+    - "{{ redis_log_dir }}"
+    - "{{ redis_run_dir }}"
+    - "{{ redis_backup_dir }}"
+
+- name: Create instance-specific directories
+  file:
+    path: "{{ redis_base_dir }}/{{ item.0.name }}/{{ item.1 }}"
+    state: directory
+    owner: "{{ redis_user }}"
+    group: "{{ redis_group }}"
+    mode: "{{ redis_dir_mode }}"
+  with_nested:
+    - "{{ redis_instances }}"
+    - ['data', 'logs', 'configs']
+
+# Generate configuration files
+- name: Generate Redis configuration files
+  template:
+    src: redis.conf.j2
+    dest: "{{ redis_base_dir }}/{{ item.name }}/configs/redis.conf"
+    owner: "{{ redis_user }}"
+    group: "{{ redis_group }}"
+    mode: "{{ redis_config_mode }}"
+    backup: "{{ redis_backup_config }}"
+  loop: "{{ redis_instances }}"
+  notify: restart redis instances
+
+# Generate systemd service files
+- name: Generate Redis systemd service files
+  template:
+    src: redis.service.j2
+    dest: "/etc/systemd/system/{{ item.name }}.service"
+    mode: "{{ redis_file_mode }}"
+  loop: "{{ redis_instances }}"
+  notify:
+    - reload systemd
+    - restart redis instances
+
+# Start and enable services
+- name: Reload systemd daemon
+  systemd:
+    daemon_reload: true
+
+- name: Enable and start Redis instances
+  systemd:
+    name: "{{ item.name }}"
+    enabled: "{{ redis_enabled_on_startup }}"
+    state: "{{ redis_service_state }}"
+  loop: "{{ redis_instances }}"
+
+# Verification tasks
+- name: Wait for Redis instances to start
+  wait_for:
+    host: "{{ redis_bind_interface }}"
+    port: "{{ item.port }}"
+    timeout: 30
+    delay: 2
+  loop: "{{ redis_instances }}"
+
+- name: Create Redis management scripts
+  template:
+    src: redis-manager.sh.j2
+    dest: "{{ redis_base_dir }}/redis-manager.sh"
+    owner: "{{ redis_user }}"
+    group: "{{ redis_group }}"
+    mode: '0755'
+
+# Security hardening
+- name: Set proper permissions on Redis directories
+  file:
+    path: "{{ item }}"
+    owner: "{{ redis_user }}"
+    group: "{{ redis_group }}"
+    mode: "{{ redis_dir_mode }}"
+    recurse: true
+  loop:
+    - "{{ redis_base_dir }}"
+    - "{{ redis_log_dir }}"

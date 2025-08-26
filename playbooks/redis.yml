@@ -1,0 +1,73 @@
+---
+- name: Deploy Multiple Redis Instances
+  hosts: redis_servers
+  become: true
+  vars:
+    redis_instances:
+      - name: "redis-cache"
+        port: 6379
+        maxmemory: "512mb"
+        maxmemory_policy: "allkeys-lru"
+        databases: 16
+      - name: "redis-session"
+        port: 6380
+        maxmemory: "256mb"
+        maxmemory_policy: "allkeys-lru"
+        databases: 1
+      - name: "redis-queue"
+        port: 6381
+        maxmemory: "1gb"
+        maxmemory_policy: "noeviction"
+        databases: 1
+  roles:
+    - redis
+
+
+# ---
+# - name: Deploy Multiple Redis Instances
+#   hosts: redis_servers
+#   become: yes
+#   gather_facts: yes
+#
+#   pre_tasks:
+#     - name: Update system packages (Ubuntu/Debian)
+#       apt:
+#         update_cache: yes
+#         cache_valid_time: 3600
+#       when: ansible_os_family == "Debian"
+#
+#     - name: Update system packages (RedHat/CentOS)
+#       yum:
+#         update_cache: yes
+#       when: ansible_os_family == "RedHat"
+#
+#   roles:
+#     - redis
+#
+#   post_tasks:
+#     - name: Display Redis instances status
+#       debug:
+#         msg: |
+#           Redis instances deployed successfully:
+#           {% for instance in redis_instances %}
+#           - {{ instance.name }} on port {{ instance.port }} ({{ instance.description }})
+#           {% endfor %}
+#
+#     - name: Verify Redis connectivity
+#       shell: "redis-cli -p {{ item.port }} ping"
+#       register: redis_ping_results
+#       loop: "{{ redis_instances }}"
+#       changed_when: false
+#       failed_when: redis_ping_results.stdout != "PONG"
+#
+#     - name: Show Redis memory usage
+#       shell: "redis-cli -p {{ item.port }} info memory | grep used_memory_human"
+#       register: redis_memory_results
+#       loop: "{{ redis_instances }}"
+#       changed_when: false
+#
+#     - name: Display memory usage
+#       debug:
+#         msg: "{{ item.item.name }} (port {{ item.item.port }}): {{ item.stdout }}"
+#       loop: "{{ redis_memory_results.results }}"
+

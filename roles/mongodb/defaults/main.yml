@@ -1,7 +1,6 @@
 # Deployment Mode Detection
 mongodb_deployment_mode: "standalone"
 mongodb_version: "6.0.5"
-mongodb_auto_detect_mode: true
 
 # Package Management
 mongodb_use_official_repo: true
