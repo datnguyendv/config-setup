@@ -1,0 +1,29 @@
+---
+# Elasticsearch general settings
+elasticsearch_version: "8.11.0"
+elasticsearch_deployment_mode: single-node  # single-node hoặc cluster
+
+# Cluster settings
+elasticsearch_cluster_name: "my-cluster"
+elasticsearch_node_name: "{{ ansible_hostname }}"
+elasticsearch_network_host: "0.0.0.0"
+elasticsearch_http_port: 9200
+elasticsearch_transport_port: 9300
+
+# JVM settings
+elasticsearch_heap_size: "1g"
+elasticsearch_java_home: ""
+
+# Security settings
+elasticsearch_security_enabled: true
+elasticsearch_security_enrollment_enabled: true
+
+# Directory settings
+elasticsearch_home: "/usr/share/elasticsearch"
+elasticsearch_config_dir: "/etc/elasticsearch"
+elasticsearch_data_dir: "/var/lib/elasticsearch"
+elasticsearch_log_dir: "/var/log/elasticsearch"
+
+# Service settings
+elasticsearch_service_enabled: true
+elasticsearch_service_state: started

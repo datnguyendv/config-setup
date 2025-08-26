@@ -1,0 +1,17 @@
+---
+elasticsearch_packages:
+  - elasticsearch
+  - openjdk-11-jdk
+
+elasticsearch_repo_key: "https://artifacts.elastic.co/GPG-KEY-elasticsearch"
+elasticsearch_repo_url: "deb https://artifacts.elastic.co/packages/8.x/apt stable main"
+
+elasticsearch_user: elasticsearch
+elasticsearch_group: elasticsearch
+
+elasticsearch_service_name: elasticsearch
+elasticsearch_config_file: "{{ elasticsearch_config_dir }}/elasticsearch.yml"
+
+# Debian-specific paths
+elasticsearch_java_home: "/usr/lib/jvm/java-11-openjdk-amd64"
+elasticsearch_systemd_dir: "/etc/systemd/system"

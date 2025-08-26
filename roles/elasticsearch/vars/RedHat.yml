@@ -1,0 +1,17 @@
+---
+elasticsearch_packages:
+  - elasticsearch
+  - java-11-openjdk
+
+elasticsearch_repo_baseurl: "https://artifacts.elastic.co/packages/8.x/yum"
+elasticsearch_repo_gpgkey: "https://artifacts.elastic.co/GPG-KEY-elasticsearch"
+
+elasticsearch_user: elasticsearch
+elasticsearch_group: elasticsearch
+
+elasticsearch_service_name: elasticsearch
+elasticsearch_config_file: "{{ elasticsearch_config_dir }}/elasticsearch.yml"
+
+# RedHat-specific paths
+elasticsearch_java_home: "/usr/lib/jvm/java-11-openjdk"
+elasticsearch_systemd_dir: "/etc/systemd/system"

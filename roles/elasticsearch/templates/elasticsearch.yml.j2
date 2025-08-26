@@ -1,0 +1,39 @@
+# ======================== Elasticsearch Configuration =========================
+cluster.name: {{ elasticsearch_cluster_name }}
+node.name: {{ elasticsearch_node_name }}
+
+# ---------------------------------- Paths ------------------------------------
+path.data: {{ elasticsearch_data_dir }}
+path.logs: {{ elasticsearch_log_dir }}
+
+# ---------------------------------- Network -----------------------------------
+network.host: {{ elasticsearch_network_host }}
+http.port: {{ elasticsearch_http_port }}
+transport.port: {{ elasticsearch_transport_port }}
+
+{% if elasticsearch_deployment_mode == 'single-node' %}
+# -------------------------------- Single Node --------------------------------
+discovery.type: single-node
+
+{% else %}
+# -------------------------------- Cluster Mode -------------------------------
+cluster.initial_master_nodes: {{ elasticsearch_initial_master_nodes | to_json }}
+discovery.seed_hosts: {{ elasticsearch_seed_hosts | to_json }}
+{% endif %}
+
+# --------------------------------- Security ----------------------------------
+{% if elasticsearch_security_enabled %}
+xpack.security.enabled: true
+xpack.security.enrollment.enabled: {{ elasticsearch_security_enrollment_enabled | lower }}
+
+xpack.security.http.ssl:
+  enabled: true
+  keystore.path: certs/http.p12
+
+xpack.security.transport.ssl:
+  enabled: true
+  verification_mode: certificate
+  keystore.path: certs/transport.p12
+  truststore.path: certs/transport.p12
+{% endif %}
+

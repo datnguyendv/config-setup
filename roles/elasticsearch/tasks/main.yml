@@ -1,0 +1,21 @@
+---
+# Load OS-specific variables
+- name: Include OS-specific variables
+  include_vars: "{{ ansible_os_family }}.yml"
+  failed_when: ansible_os_family not in ['Debian', 'RedHat']
+
+# Core installation and configuration
+- name: Mongodb installation
+  import_tasks: install.yml
+
+- name: Configure Elasticsearch
+  include_tasks: configure.yml
+
+# Ensure service is running
+- name: Start and enable Elasticsearch service
+  systemd:
+    name: "{{ elasticsearch_service_name }}"
+    enabled: "{{ elasticsearch_service_enabled }}"
+    state: "{{ elasticsearch_service_state }}"
+    daemon_reload: true
+  notify: restart elasticsearch
