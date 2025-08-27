@@ -1,0 +1,3 @@
+exporter_port: "9108"
+exporter_image_name: "quay.io/prometheuscommunity/elasticsearch-exporter"
+exporter_image_version: "v1.6.0"

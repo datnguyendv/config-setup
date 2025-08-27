@@ -1,0 +1,10 @@
+- name: Run elasticsearch-exporter container
+  community.docker.docker_container:
+    name: elasticsearch-exporter
+    image: "{{ exporter_image_name }}:{{ exporter_image_version }}"
+    state: started
+    restart_policy: always
+    published_ports:
+      - "{{ exporter_port | default('9114') }}:9114"
+    env:
+      ES_URI: "http://{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}:{{ elasticsearch_http_port | default('9200') }}"
