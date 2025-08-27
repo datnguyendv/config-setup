@@ -1,10 +1,34 @@
 # ======================== Elasticsearch Configuration =========================
+#
+# ---------------------------------- Cluster -----------------------------------
 cluster.name: {{ elasticsearch_cluster_name }}
+
+# ------------------------------------ Node ------------------------------------
 node.name: {{ elasticsearch_node_name }}
 
-# ---------------------------------- Paths ------------------------------------
+{% if elasticsearch_deployment_mode == 'cluster' %}
+# Node roles
+{% if elasticsearch_node_roles is defined and elasticsearch_node_roles %}
+node.roles: {{ elasticsearch_node_roles | to_json }}
+{% else %}
+node.master: {{ elasticsearch_master_node | lower }}
+node.data: {{ elasticsearch_data_node | lower }}
+node.ingest: {{ elasticsearch_ingest_node | lower }}
+node.ml: {{ elasticsearch_ml_node | lower }}
+{% endif %}
+
+# Node attributes
+{% if elasticsearch_rack_id is defined %}
+node.attr.rack_id: {{ elasticsearch_rack_id }}
+{% endif %}
+{% endif %}
+
+# ----------------------------------- Paths ------------------------------------
 path.data: {{ elasticsearch_data_dir }}
 path.logs: {{ elasticsearch_log_dir }}
+
+# ---------------------------------- Memory -----------------------------------
+bootstrap.memory_lock: true
 
 # ---------------------------------- Network -----------------------------------
 network.host: {{ elasticsearch_network_host }}
@@ -15,25 +39,41 @@ transport.port: {{ elasticsearch_transport_port }}
 # -------------------------------- Single Node --------------------------------
 discovery.type: single-node
 
-{% else %}
-# -------------------------------- Cluster Mode -------------------------------
-cluster.initial_master_nodes: {{ elasticsearch_initial_master_nodes | to_json }}
+{% elif elasticsearch_deployment_mode == 'cluster' %}
+# -------------------------------- Discovery -----------------------------------
 discovery.seed_hosts: {{ elasticsearch_seed_hosts | to_json }}
+cluster.initial_master_nodes: {{ elasticsearch_initial_master_nodes | to_json }}
+
+# --------------------------------- Gateway ------------------------------------  
+gateway.expected_nodes: {{ groups['elasticsearch'] | length }}
+gateway.expected_master_nodes: {{ elasticsearch_expected_master_nodes }}
+gateway.recover_after_nodes: {{ elasticsearch_recover_after_nodes }}
+
+# -------------------------------- Allocation ----------------------------------
+{% if elasticsearch_shard_allocation_awareness %}
+cluster.routing.allocation.awareness.attributes: rack_id
+{% endif %}
 {% endif %}
 
-# --------------------------------- Security ----------------------------------
+# ---------------------------------- Various -----------------------------------
+action.destructive_requires_name: true
+
 {% if elasticsearch_security_enabled %}
-xpack.security.enabled: true
+# --------------------------------- Security ----------------------------------
+xpack.security.enabled: {{ elasticsearch_security_enabled | lower }}
 xpack.security.enrollment.enabled: {{ elasticsearch_security_enrollment_enabled | lower }}
 
-xpack.security.http.ssl:
-  enabled: true
-  keystore.path: certs/http.p12
+{% if elasticsearch_deployment_mode == 'cluster' %}
+xpack.security.transport.ssl.enabled: true
+xpack.security.transport.ssl.verification_mode: certificate
+xpack.security.transport.ssl.client_authentication: required
+xpack.security.transport.ssl.keystore.path: certs/elastic-certificates.p12
+xpack.security.transport.ssl.truststore.path: certs/elastic-certificates.p12
 
-xpack.security.transport.ssl:
-  enabled: true
-  verification_mode: certificate
-  keystore.path: certs/transport.p12
-  truststore.path: certs/transport.p12
+xpack.security.http.ssl.enabled: false
 {% endif %}
+{% endif %}
+
+# ---------------------------------- Indices -----------------------------------
+action.auto_create_index: .monitoring*,.watches,.triggered_watches,.watcher-history*,.ml*
 

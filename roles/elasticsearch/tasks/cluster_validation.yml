@@ -1,0 +1,49 @@
+---
+- name: Wait for all nodes to be ready
+  uri:
+    url: "http://{{ ansible_default_ipv4.address }}:{{ elasticsearch_http_port }}/_cluster/health"
+    method: GET
+    status_code: [200]
+  register: cluster_health
+  until:
+    - cluster_health.status == 200
+    - cluster_health.json.status in ['yellow', 'green']
+    - cluster_health.json.number_of_nodes == (groups['elasticsearch'] | length)
+  retries: 60
+  delay: 10
+
+- name: Get cluster nodes information
+  uri:
+    url: "http://{{ ansible_default_ipv4.address }}:{{ elasticsearch_http_port }}/_cat/nodes?v&h=name,ip,heap.percent,ram.percent,cpu,load_1m,node.role,master"
+    method: GET
+  register: cluster_nodes_info
+  run_once: true
+  delegate_to: "{{ groups['elasticsearch'][0] }}"
+
+- name: Display cluster status
+  debug:
+    msg:
+      - "=== Elasticsearch Cluster Status ==="
+      - "{{ cluster_nodes_info.content.split('\n') }}"
+      - "=== Cluster Health ==="
+      - "Status: {{ cluster_health.json.status | upper }}"
+      - "Active Primary Shards: {{ cluster_health.json.active_primary_shards }}"
+      - "Active Shards: {{ cluster_health.json.active_shards }}"
+      - "Number of Nodes: {{ cluster_health.json.number_of_nodes }}"
+      - "Number of Data Nodes: {{ cluster_health.json.number_of_data_nodes }}"
+  run_once: true
+
+- name: Verify master election
+  uri:
+    url: "http://{{ ansible_default_ipv4.address }}:{{ elasticsearch_http_port }}/_cat/master?v"
+    method: GET
+  register: master_info
+  run_once: true
+  delegate_to: "{{ groups['elasticsearch'][0] }}"
+
+- name: Display master information
+  debug:
+    msg:
+      - "=== Current Master Node ==="
+      - "{{ master_info.content }}"
+  run_once: true

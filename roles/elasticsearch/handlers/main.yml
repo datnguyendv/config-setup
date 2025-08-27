@@ -1,10 +1,17 @@
 ---
-- name: restart elasticsearch
+- name: reload systemd
+  systemd:
+    daemon_reload: true
+
+- name: restart elasticsearch single
   systemd:
     name: "{{ elasticsearch_service_name }}"
     state: restarted
     daemon_reload: true
+  when: elasticsearch_deployment_mode == 'single-node'
 
-- name: reload systemd
-  systemd:
-    daemon_reload: true
+- name: restart elasticsearch cluster
+  include_tasks: rolling-restart.yml
+  when:
+    - elasticsearch_deployment_mode == 'cluster'
+    - elasticsearch_restart_on_change

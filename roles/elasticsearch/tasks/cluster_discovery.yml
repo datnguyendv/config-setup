@@ -1,0 +1,32 @@
+---
+- name: Generate seed hosts from inventory
+  set_fact:
+    elasticsearch_seed_hosts: >-
+      {{
+        groups['elasticsearch'] |
+        map('extract', hostvars, 'ansible_default_ipv4') |
+        map(attribute='address') |
+        map('regex_replace', '^(.*)$', '\1:' + elasticsearch_transport_port|string) |
+        list
+      }}
+  when: elasticsearch_seed_hosts | length == 0
+
+- name: Generate initial master nodes from masters group
+  set_fact:
+    elasticsearch_initial_master_nodes: >-
+      {{
+        (groups['elasticsearch_masters'] | default(groups['elasticsearch'][:3])) |
+        map('extract', hostvars, 'elasticsearch_node_name') |
+        list
+      }}
+  when: elasticsearch_initial_master_nodes | length == 0
+
+- name: Debug cluster discovery settings
+  debug:
+    msg:
+      - "Deployment mode: {{ elasticsearch_deployment_mode }}"
+      - "Cluster name: {{ elasticsearch_cluster_name }}"
+      - "Seed hosts: {{ elasticsearch_seed_hosts }}"
+      - "Initial master nodes: {{ elasticsearch_initial_master_nodes }}"
+      - "Node name: {{ elasticsearch_node_name }}"
+      - "Node roles: {{ elasticsearch_node_roles }}"
