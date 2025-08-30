@@ -1,0 +1,78 @@
+---
+- name: Create Elasticsearch directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ elasticsearch_user }}"
+    group: "{{ elasticsearch_group }}"
+    mode: '0755'
+  loop:
+    - "{{ elasticsearch_config_dir }}"
+    - "{{ elasticsearch_data_dir }}"
+    - "{{ elasticsearch_log_dir }}"
+    - "{{ elasticsearch_systemd_override_dir }}"
+
+- name: Set directory ownership recursively
+  file:
+    path: "{{ item }}"
+    owner: "{{ elasticsearch_user }}"
+    group: "{{ elasticsearch_group }}"
+    recurse: true
+  loop:
+    - "{{ elasticsearch_data_dir }}"
+    - "{{ elasticsearch_log_dir }}"
+
+- name: Generate Elasticsearch main configuration
+  template:
+    src: elasticsearch.yml.j2
+    dest: "{{ elasticsearch_config_file }}"
+    owner: "{{ elasticsearch_user }}"
+    group: "{{ elasticsearch_group }}"
+    mode: '0644'
+    backup: true
+  notify: 
+    - restart elasticsearch single
+    - restart elasticsearch cluster
+
+- name: Generate JVM options
+  template:
+    src: jvm.options.j2
+    dest: "{{ elasticsearch_config_dir }}/jvm.options"
+    owner: "{{ elasticsearch_user }}"
+    group: "{{ elasticsearch_group }}"
+    mode: '0644'
+    backup: true
+  notify:
+    - restart elasticsearch single
+    - restart elasticsearch cluster
+
+- name: Create systemd override directory
+  file:
+    path: "{{ elasticsearch_systemd_override_dir }}"
+    state: directory
+    mode: '0755'
+
+- name: Configure systemd service override
+  template:
+    src: systemd.j2
+    dest: "{{ elasticsearch_systemd_override_dir }}/override.conf"
+    mode: '0644'
+  notify:
+    - reload systemd
+    - restart elasticsearch single
+    - restart elasticsearch cluster
+  when: elasticsearch_java_home != ""
+
+- name: Set system limits for elasticsearch user
+  pam_limits:
+    domain: "{{ elasticsearch_user }}"
+    limit_type: "{{ item.type }}"
+    limit_item: "{{ item.item }}"
+    value: "{{ item.value }}"
+  loop:
+    - { type: 'soft', item: 'memlock', value: 'unlimited' }
+    - { type: 'hard', item: 'memlock', value: 'unlimited' }
+    - { type: 'soft', item: 'nofile', value: '65536' }
+    - { type: 'hard', item: 'nofile', value: '65536' }
+    - { type: 'soft', item: 'nproc', value: '4096' }
+    - { type: 'hard', item: 'nproc', value: '4096' }

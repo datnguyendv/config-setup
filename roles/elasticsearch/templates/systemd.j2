@@ -1,0 +1,24 @@
+[Service]
+Environment=ES_JAVA_HOME={{ elasticsearch_java_home }}
+Environment=ES_PATH_CONF={{ elasticsearch_config_dir }}
+Environment=ES_TMPDIR=/tmp
+
+# Elasticsearch needs to be able to lock memory
+LimitMEMLOCK=infinity
+
+# Allow many file descriptors
+LimitNOFILE=65535
+
+# Allow many processes
+LimitNPROC=4096
+
+# Allow core dumps
+LimitCORE=infinity
+
+# Elasticsearch home directory
+Environment=ES_HOME={{ elasticsearch_home }}
+
+{% if elasticsearch_security_enabled %}
+# Bootstrap password for initial setup
+Environment=ELASTIC_PASSWORD={{ elasticsearch_bootstrap_password }}
+{% endif %}

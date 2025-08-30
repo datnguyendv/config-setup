@@ -1,0 +1,8 @@
+- name: Deploy Elasticsearch
+  hosts: elasticsearch
+  become: true
+  gather_facts: true
+  vars:
+    elasticsearch_deployment_mode: "{{ deployment_mode | default('single-node') }}"
+  roles:
+    - elasticsearch

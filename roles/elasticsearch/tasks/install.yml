@@ -1,0 +1,45 @@
+---
+- name: Add Elasticsearch repository key
+  apt_key:
+    url: "{{ elasticsearch_repo_key }}"
+    state: present
+  when: ansible_os_family == "Debian"
+
+- name: Add Elasticsearch repository
+  yum_repository:
+    name: elasticsearch
+    description: "Elasticsearch repository for 8.x packages"
+    baseurl: "{{ elasticsearch_repo_baseurl }}"
+    gpgcheck: true
+    gpgkey: "{{ elasticsearch_repo_gpgkey }}"
+    enabled: true
+  when: ansible_os_family == "RedHat"
+
+- name: Add Elasticsearch repository
+  apt_repository:
+    repo: "{{ elasticsearch_repo_url }}"
+    state: present
+    update_cache: true
+  when: ansible_os_family == "Debian"
+
+- name: Install required packages
+  apt:
+    name: "{{ elasticsearch_packages }}"
+    state: present
+    update_cache: true
+  when: ansible_os_family == "Debian"
+
+- name: Install required packages
+  yum:
+    name: "{{ elasticsearch_packages }}"
+    state: present
+  when: ansible_os_family == "RedHat"
+
+- name: Create elasticsearch user
+  user:
+    name: "{{ elasticsearch_user }}"
+    group: "{{ elasticsearch_group }}"
+    system: true
+    shell: /bin/false
+    home: "{{ elasticsearch_home }}"
+    createhome: false
