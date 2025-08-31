@@ -1,0 +1,76 @@
+---
+- name: Create Kafka user and group
+  group:
+    name: "{{ kafka_group }}"
+    state: present
+
+- name: Create Kafka user
+  user:
+    name: "{{ kafka_user }}"
+    group: "{{ kafka_group }}"
+    home: "{{ kafka_home }}"
+    shell: /bin/bash
+    system: yes
+    createhome: no
+
+- name: Install Java (Debian/Ubuntu)
+  apt:
+    name: openjdk-11-jdk
+    state: present
+    update_cache: yes
+  when: ansible_os_family == "Debian"
+
+- name: Install Java (RedHat/CentOS)
+  package:
+    name: java-11-openjdk-devel
+    state: present
+  when: ansible_os_family == "RedHat"
+
+- name: Create Kafka directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ kafka_user }}"
+    group: "{{ kafka_group }}"
+    mode: '0755'
+  loop:
+    - "{{ kafka_home }}"
+    - "{{ kafka_log_dirs }}"
+    - "{{ kafka_config_dir }}"
+
+- name: Check if Kafka is already installed
+  stat:
+    path: "{{ kafka_home }}/bin/kafka-server-start.sh"
+  register: kafka_installed
+
+- name: Download Kafka
+  get_url:
+    url: "{{ kafka_download_url }}"
+    dest: "/tmp/{{ kafka_package }}.tgz"
+    mode: '0644'
+  when: not kafka_installed.stat.exists
+
+- name: Extract Kafka
+  unarchive:
+    src: "/tmp/{{ kafka_package }}.tgz"
+    dest: "/tmp"
+    remote_src: yes
+    owner: "{{ kafka_user }}"
+    group: "{{ kafka_group }}"
+  when: not kafka_installed.stat.exists
+
+- name: Copy Kafka files
+  shell: |
+    cp -r /tmp/{{ kafka_package }}/* {{ kafka_home }}/
+    chown -R {{ kafka_user }}:{{ kafka_group }} {{ kafka_home }}
+  when: not kafka_installed.stat.exists
+  notify: restart kafka
+
+- name: Clean up download files
+  file:
+    path: "{{ item }}"
+    state: absent
+  loop:
+    - "/tmp/{{ kafka_package }}.tgz"
+    - "/tmp/{{ kafka_package }}"
+  when: not kafka_installed.stat.exists

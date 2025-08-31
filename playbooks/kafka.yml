@@ -1,0 +1,18 @@
+---
+- name: Deploy Apache Kafka Infrastructure
+  hosts: all
+  become: yes
+  gather_facts: yes
+  vars:
+    kafka_deployment_mode: "{{ 'kraft' if 'kafka_kraft' in group_names else 'zookeeper' }}"
+  roles:
+    - role: zookeeper
+      when: kafka_deployment_mode == 'zookeeper' and 'zookeeper' in group_names
+      tags: ['zookeeper']
+    
+    - role: kraft
+      when: kafka_deployment_mode == 'kraft'
+      tags: ['kraft']
+    
+    - role: kafka
+      tags: ['kafka']
