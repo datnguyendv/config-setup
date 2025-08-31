@@ -20,3 +20,9 @@ elasticsearch:
 standalone: done
 
 cluster: need to test
+
+kafka:
+
+with zookeeper: need to test
+
+with kraft: need to test

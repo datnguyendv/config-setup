@@ -14,11 +14,7 @@
 - name: Generate initial master nodes from masters group
   set_fact:
     elasticsearch_initial_master_nodes: >-
-      {{
-        (groups['elasticsearch_masters'] | default(groups['elasticsearch'][:3])) |
-        map('extract', hostvars, 'elasticsearch_node_name') |
-        list
-      }}
+      {{ (groups['elasticsearch_masters'] | default(groups['elasticsearch'][:3])) | list }}
   when: elasticsearch_initial_master_nodes | length == 0
 
 - name: Debug cluster discovery settings

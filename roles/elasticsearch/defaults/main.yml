@@ -5,7 +5,7 @@ elasticsearch_deployment_mode: single-node
 
 # Cluster configuration
 elasticsearch_cluster_name: "my-elasticsearch-cluster"
-elasticsearch_node_name: "{{ ansible_hostname }}"
+elasticsearch_node_name: "{{ ansible_host }}"
 elasticsearch_network_host: "0.0.0.0"
 elasticsearch_http_port: 9200
 elasticsearch_transport_port: 9300
