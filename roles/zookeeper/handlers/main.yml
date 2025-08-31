@@ -1,0 +1,20 @@
+---
+- name: reload systemd
+  systemd:
+    daemon_reload: yes
+
+- name: restart zookeeper
+  systemd:
+    name: zookeeper
+    state: restarted
+  listen: "restart zookeeper"
+
+- name: stop zookeeper
+  systemd:
+    name: zookeeper
+    state: stopped
+
+- name: start zookeeper
+  systemd:
+    name: zookeeper
+    state: started

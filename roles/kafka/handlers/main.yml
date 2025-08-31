@@ -1,0 +1,28 @@
+---
+- name: reload systemd
+  systemd:
+    daemon_reload: true
+
+- name: restart kafka
+  systemd:
+    name: kafka
+    state: restarted
+  listen: "restart kafka"
+
+- name: stop kafka
+  systemd:
+    name: kafka
+    state: stopped
+
+- name: start kafka
+  systemd:
+    name: kafka
+    state: started
+
+- name: format kafka storage
+  shell: |
+    {{ kafka_home }}/bin/kafka-storage.sh format \
+    -t {{ kafka_cluster_uuid }} \
+    -c {{ kafka_config_dir }}/server.properties
+  become_user: "{{ kafka_user }}"
+  listen: "format kafka storage"

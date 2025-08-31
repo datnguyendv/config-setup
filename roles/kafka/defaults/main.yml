@@ -38,3 +38,23 @@ kafka_log_segment_bytes: 1073741824
 kafka_security_enabled: false
 kafka_ssl_enabled: false
 kafka_sasl_enabled: false
+
+# vars
+# OS-specific package mappings
+_kafka_packages:
+  RedHat:
+    - java-11-openjdk-devel
+    - wget
+    - unzip
+  Debian:
+    - openjdk-11-jdk
+    - wget
+    - unzip
+
+# Java paths by OS
+_java_home:
+  RedHat: /usr/lib/jvm/java-11-openjdk
+  Debian: /usr/lib/jvm/java-11-openjdk-amd64
+
+kafka_java_home: "{{ _java_home[ansible_os_family] }}"
+kafka_packages: "{{ _kafka_packages[ansible_os_family] }}"

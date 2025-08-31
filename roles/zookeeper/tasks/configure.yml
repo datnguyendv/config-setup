@@ -1,0 +1,42 @@
+---
+- name: Set ZooKeeper ID
+  set_fact:
+    zookeeper_id: "{{ groups['zookeeper'].index(inventory_hostname) + 1 }}"
+  when: zookeeper_id is not defined
+
+- name: Create myid file
+  copy:
+    content: "{{ zookeeper_id }}"
+    dest: "{{ zookeeper_data_dir }}/myid"
+    owner: "{{ zookeeper_user }}"
+    group: "{{ zookeeper_group }}"
+    mode: '0644'
+  notify: restart zookeeper
+
+- name: Configure ZooKeeper
+  template:
+    src: zoo.cfg.j2
+    dest: "{{ zookeeper_home }}/conf/zoo.cfg"
+    owner: "{{ zookeeper_user }}"
+    group: "{{ zookeeper_group }}"
+    mode: '0644'
+    backup: true
+  notify: restart zookeeper
+
+- name: Configure ZooKeeper logging
+  template:
+    src: log4j.properties.j2
+    dest: "{{ zookeeper_home }}/conf/log4j.properties"
+    owner: "{{ zookeeper_user }}"
+    group: "{{ zookeeper_group }}"
+    mode: '0644'
+  notify: restart zookeeper
+
+- name: Set ZooKeeper environment variables
+  template:
+    src: zkEnv.sh.j2
+    dest: "{{ zookeeper_home }}/conf/zkEnv.sh"
+    owner: "{{ zookeeper_user }}"
+    group: "{{ zookeeper_group }}"
+    mode: '0755'
+  notify: restart zookeeper

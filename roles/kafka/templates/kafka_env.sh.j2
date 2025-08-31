@@ -1,0 +1,24 @@
+#!/bin/bash
+
+# Licensed to the Apache Software Foundation (ASF) under one or more
+# contributor license agreements.
+
+export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
+
+# Kafka heap settings
+export KAFKA_HEAP_OPTS="{{ kafka_heap_opts }}"
+
+# JVM performance options
+export KAFKA_JVM_PERFORMANCE_OPTS="{{ kafka_jvm_performance_opts }}"
+
+# JMX settings
+{% if kafka_jmx_enabled | default(false) %}
+export KAFKA_JMX_OPTS="-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.port={{ kafka_jmx_port | default(9999) }}"
+export JMX_PORT={{ kafka_jmx_port | default(9999) }}
+{% endif %}
+
+# Generic jvm settings you want to add
+export KAFKA_OPTS="{{ kafka_opts | default('') }}"
+
+# Log4j settings
+export KAFKA_LOG4J_OPTS="-Dlog4j.configuration=file:{{ kafka_config_dir }}/log4j.properties"
