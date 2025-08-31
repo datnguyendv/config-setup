@@ -45,7 +45,7 @@ discovery.seed_hosts: {{ elasticsearch_seed_hosts | to_json }}
 cluster.initial_master_nodes: {{ elasticsearch_initial_master_nodes | to_json }}
 
 # --------------------------------- Gateway ------------------------------------  
-gateway.expected_nodes: {{ groups['elasticsearch'] | length }}
+gateway.expected_nodes: {{ groups['es'] | length }}
 gateway.expected_master_nodes: {{ elasticsearch_expected_master_nodes }}
 gateway.recover_after_nodes: {{ elasticsearch_recover_after_nodes }}
 

@@ -1,24 +1,24 @@
 ---
 - name: Check if cluster is available
   uri:
-    url: "http://{{ hostvars[groups['elasticsearch'][0]]['ansible_default_ipv4']['address'] }}:{{ elasticsearch_http_port }}/_cluster/health"
+    url: "http://{{ hostvars[groups['es'][0]]['ansible_default_ipv4']['address'] }}:{{ elasticsearch_http_port }}/_cluster/health"
     method: GET
     status_code: [200, 503]
   register: cluster_available
-  delegate_to: "{{ groups['elasticsearch'][0] }}"
+  delegate_to: "{{ groups['es'][0] }}"
   run_once: true
   ignore_errors: true
 
 - name: Disable shard allocation before restart
   uri:
-    url: "http://{{ hostvars[groups['elasticsearch'][0]]['ansible_default_ipv4']['address'] }}:{{ elasticsearch_http_port }}/_cluster/settings"
+    url: "http://{{ hostvars[groups['es'][0]]['ansible_default_ipv4']['address'] }}:{{ elasticsearch_http_port }}/_cluster/settings"
     method: PUT
     body_format: json
     body:
       persistent:
         cluster.routing.allocation.enable: "primaries"
     status_code: [200]
-  delegate_to: "{{ groups['elasticsearch'][0] }}"
+  delegate_to: "{{ groups['es'][0] }}"
   run_once: true
   when: cluster_available.status == 200
 
@@ -48,22 +48,22 @@
   register: cluster_health
   until:
     - cluster_health.status == 200
-    - cluster_health.json.number_of_nodes >= (groups['elasticsearch'] | length)
+    - cluster_health.json.number_of_nodes >= (groups['es'] | length)
   retries: 30
   delay: 10
   ignore_errors: true
 
 - name: Re-enable shard allocation after all restarts
   uri:
-    url: "http://{{ hostvars[groups['elasticsearch'][0]]['ansible_default_ipv4']['address'] }}:{{ elasticsearch_http_port }}/_cluster/settings"
+    url: "http://{{ hostvars[groups['es'][0]]['ansible_default_ipv4']['address'] }}:{{ elasticsearch_http_port }}/_cluster/settings"
     method: PUT
     body_format: json
     body:
       persistent:
         cluster.routing.allocation.enable: null
     status_code: [200]
-  delegate_to: "{{ groups['elasticsearch'][0] }}"
+  delegate_to: "{{ groups['es'][0] }}"
   run_once: true
   when:
-    - inventory_hostname == groups['elasticsearch'][-1]
+    - inventory_hostname == groups['es'][-1]
     - cluster_available.status == 200

@@ -19,7 +19,7 @@
       --pass ""
   when:
     - not ca_exists.stat.exists
-    - inventory_hostname == groups['elasticsearch'][0] or elasticsearch_deployment_mode == 'single-node'
+    - inventory_hostname == groups['es'][0] or elasticsearch_deployment_mode == 'single-node'
   become_user: "{{ elasticsearch_user }}"
 
 - name: Generate node certificates (on first master only)
@@ -31,7 +31,7 @@
       --pass ""
   when:
     - not ca_exists.stat.exists
-    - inventory_hostname == groups['elasticsearch'][0] or elasticsearch_deployment_mode == 'single-node'
+    - inventory_hostname == groups['es'][0] or elasticsearch_deployment_mode == 'single-node'
   become_user: "{{ elasticsearch_user }}"
 
 - name: Fetch certificates from first master
@@ -43,7 +43,7 @@
     - elastic-stack-ca.p12
     - elastic-certificates.p12
   when:
-    - inventory_hostname == groups['elasticsearch'][0] or elasticsearch_deployment_mode == 'single-node'
+    - inventory_hostname == groups['es'][0] or elasticsearch_deployment_mode == 'single-node'
     - elasticsearch_deployment_mode == 'cluster'
 
 - name: Distribute certificates to all nodes
@@ -58,4 +58,4 @@
     - elastic-certificates.p12
   when:
     - elasticsearch_deployment_mode == 'cluster'
-    - inventory_hostname != groups['elasticsearch'][0]
+    - inventory_hostname != groups['es'][0]
