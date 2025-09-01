@@ -9,7 +9,7 @@ node.name: {{ elasticsearch_node_name }}
 {% if elasticsearch_deployment_mode == 'cluster' %}
 # Node roles
 {% if elasticsearch_node_roles is defined and elasticsearch_node_roles %}
-node.roles: {{ elasticsearch_node_roles | to_json }}
+node.roles: {{ elasticsearch_node_roles }}
 {% else %}
 node.master: {{ elasticsearch_master_node | lower }}
 node.data: {{ elasticsearch_data_node | lower }}
@@ -44,11 +44,6 @@ discovery.type: single-node
 discovery.seed_hosts: {{ elasticsearch_seed_hosts | to_json }}
 cluster.initial_master_nodes: {{ elasticsearch_initial_master_nodes | to_json }}
 
-# --------------------------------- Gateway ------------------------------------  
-gateway.expected_nodes: {{ groups['es'] | length }}
-gateway.expected_master_nodes: {{ elasticsearch_expected_master_nodes }}
-gateway.recover_after_nodes: {{ elasticsearch_recover_after_nodes }}
-
 # -------------------------------- Allocation ----------------------------------
 {% if elasticsearch_shard_allocation_awareness %}
 cluster.routing.allocation.awareness.attributes: rack_id
@@ -67,8 +62,8 @@ xpack.security.enrollment.enabled: {{ elasticsearch_security_enrollment_enabled 
 xpack.security.transport.ssl.enabled: true
 xpack.security.transport.ssl.verification_mode: certificate
 xpack.security.transport.ssl.client_authentication: required
-xpack.security.transport.ssl.keystore.path: certs/elastic-certificates.p12
-xpack.security.transport.ssl.truststore.path: certs/elastic-certificates.p12
+xpack.security.transport.ssl.keystore.path: /etc/elasticsearch/certs/transport.p12
+xpack.security.transport.ssl.truststore.path: /etc/elasticsearch/certs/transport.p12
 
 xpack.security.http.ssl.enabled: false
 {% endif %}

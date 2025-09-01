@@ -1,7 +1,7 @@
 ---
 elasticsearch_packages:
   - elasticsearch={{ elasticsearch_version }}
-  - openjdk-11-jdk
+  - openjdk-21-jdk
   - curl
   - apt-transport-https
 
@@ -14,7 +14,7 @@ elasticsearch_service_name: elasticsearch
 elasticsearch_config_file: "{{ elasticsearch_config_dir }}/elasticsearch.yml"
 
 # Debian-specific paths
-elasticsearch_java_home: "/usr/lib/jvm/java-11-openjdk-amd64"
+elasticsearch_java_home: "/usr/lib/jvm/java-21-openjdk-amd64"
 elasticsearch_systemd_dir: "/etc/systemd/system"
 elasticsearch_systemd_override_dir: "/etc/systemd/system/elasticsearch.service.d"
 

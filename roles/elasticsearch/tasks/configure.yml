@@ -30,18 +30,20 @@
     group: "{{ elasticsearch_group }}"
     mode: '0644'
     backup: true
-  notify: 
+  notify:
     - restart elasticsearch single
     - restart elasticsearch cluster
 
-- name: Generate JVM options
-  template:
-    src: jvm.options.j2
-    dest: "{{ elasticsearch_config_dir }}/jvm.options"
-    owner: "{{ elasticsearch_user }}"
-    group: "{{ elasticsearch_group }}"
-    mode: '0644'
+- name: Configure Elasticsearch HEAP size
+  lineinfile:
+    path: /etc/elasticsearch/jvm.options
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+    create: true
     backup: true
+  loop:
+    - { regexp: '^-Xms', line: "-Xms{{ elasticsearch_heap_size }}" }
+    - { regexp: '^-Xmx', line: "-Xmx{{ elasticsearch_heap_size }}" }
   notify:
     - restart elasticsearch single
     - restart elasticsearch cluster
@@ -72,7 +74,7 @@
   loop:
     - { type: 'soft', item: 'memlock', value: 'unlimited' }
     - { type: 'hard', item: 'memlock', value: 'unlimited' }
-    - { type: 'soft', item: 'nofile', value: '65536' }
-    - { type: 'hard', item: 'nofile', value: '65536' }
-    - { type: 'soft', item: 'nproc', value: '4096' }
-    - { type: 'hard', item: 'nproc', value: '4096' }
+#     - { type: 'soft', item: 'nofile', value: '65536' }
+#     - { type: 'hard', item: 'nofile', value: '65536' }
+#     - { type: 'soft', item: 'nproc', value: '4096' }
+#     - { type: 'hard', item: 'nproc', value: '4096' }

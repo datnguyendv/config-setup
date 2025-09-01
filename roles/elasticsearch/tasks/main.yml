@@ -5,33 +5,33 @@
   failed_when: ansible_os_family not in ['Debian', 'RedHat']
 
 # Core installation and configuration
-# - name: Elasticsearch installation
-#   import_tasks: install.yml
+- name: Elasticsearch installation
+  import_tasks: install.yml
 
 - name: Configure cluster discovery
   include_tasks: cluster_discovery.yml
   when: elasticsearch_deployment_mode == 'cluster'
 
 # Setup security if enabled
-# - name: Setup security
-#   include_tasks: security_setup.yml
-#   when: elasticsearch_security_enabled
-#
-# - name: Configure Elasticsearch
-#   include_tasks: configure.yml
-#
-# # Start service
-# - name: Start and enable Elasticsearch service
-#   systemd:
-#     name: "{{ elasticsearch_service_name }}"
-#     enabled: "{{ elasticsearch_service_enabled }}"
-#     state: "{{ elasticsearch_service_state }}"
-#     daemon_reload: true
-#   notify:
-#     - restart elasticsearch single
-#     - restart elasticsearch cluster
-#
-# # Validate cluster if in cluster mode
+- name: Setup security
+  include_tasks: security_setup.yml
+  when: elasticsearch_security_enabled
+
+- name: Configure Elasticsearch
+  include_tasks: configure.yml
+
+# Start service
+- name: Start and enable Elasticsearch service
+  systemd:
+    name: "{{ elasticsearch_service_name }}"
+    enabled: "{{ elasticsearch_service_enabled }}"
+    state: "{{ elasticsearch_service_state }}"
+    daemon_reload: true
+  notify:
+    - restart elasticsearch single
+    - restart elasticsearch cluster
+
+# Validate cluster if in cluster mode
 # - name: Validate cluster
 #   include_tasks: cluster_validation.yml
 #   when: elasticsearch_deployment_mode == 'cluster'
