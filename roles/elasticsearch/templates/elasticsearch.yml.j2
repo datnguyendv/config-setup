@@ -59,11 +59,12 @@ xpack.security.enabled: {{ elasticsearch_security_enabled | lower }}
 xpack.security.enrollment.enabled: {{ elasticsearch_security_enrollment_enabled | lower }}
 
 {% if elasticsearch_deployment_mode == 'cluster' %}
-xpack.security.transport.ssl.enabled: true
-xpack.security.transport.ssl.verification_mode: certificate
-xpack.security.transport.ssl.client_authentication: required
-xpack.security.transport.ssl.keystore.path: /etc/elasticsearch/certs/transport.p12
-xpack.security.transport.ssl.truststore.path: /etc/elasticsearch/certs/transport.p12
+xpack.security.transport.ssl.enabled: false
+# xpack.security.transport.ssl.verification_mode: certificate
+# xpack.security.transport.ssl.client_authentication: required
+# xpack.security.transport.ssl.key: /etc/elasticsearch/certs/{{ hostname }}.key
+# xpack.security.transport.ssl.certificate: /etc/elasticsearch/certs/{{ hostname }}.crt
+# xpack.security.transport.ssl.certificate_authorities: [ "/etc/elasticsearch/certs/ca.crt" ]
 
 xpack.security.http.ssl.enabled: false
 {% endif %}
