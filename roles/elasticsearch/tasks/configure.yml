@@ -74,7 +74,3 @@
   loop:
     - { type: 'soft', item: 'memlock', value: 'unlimited' }
     - { type: 'hard', item: 'memlock', value: 'unlimited' }
-#     - { type: 'soft', item: 'nofile', value: '65536' }
-#     - { type: 'hard', item: 'nofile', value: '65536' }
-#     - { type: 'soft', item: 'nproc', value: '4096' }
-#     - { type: 'hard', item: 'nproc', value: '4096' }
