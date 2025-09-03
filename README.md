@@ -19,7 +19,7 @@ elasticsearch:
 
 standalone: done
 
-cluster: need to test
+cluster: done
 
 kafka:
 

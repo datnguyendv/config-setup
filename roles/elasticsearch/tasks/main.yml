@@ -32,6 +32,6 @@
     - restart elasticsearch cluster
 
 # Validate cluster if in cluster mode
-# - name: Validate cluster
-#   include_tasks: cluster_validation.yml
-#   when: elasticsearch_deployment_mode == 'cluster'
+- name: Validate cluster
+  include_tasks: cluster_validation.yml
+  when: elasticsearch_deployment_mode == 'cluster'
