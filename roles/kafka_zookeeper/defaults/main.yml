@@ -1,0 +1,10 @@
+# Zookeeper Configuration
+zookeeper_version: "3.8.3"
+zookeeper_port: 2181
+zookeeper_peer_port: 2888
+zookeeper_leader_port: 3888
+zookeeper_data_dir: "{{ kafka_home }}/zookeeper/data"
+zookeeper_log_dir: "/var/log/zookeeper"
+zookeeper_max_client_cnxns: 60
+zookeeper_autopurge_purgeinterval: 1
+zookeeper_autopurge_snapretaincount: 10

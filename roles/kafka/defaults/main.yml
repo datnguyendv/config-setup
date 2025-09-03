@@ -1,60 +1,17 @@
----
-# Kafka Version and Installation
-kafka_version: "2.8.2"
-kafka_scala_version: "2.13"
-kafka_package: "kafka_{{ kafka_scala_version }}-{{ kafka_version }}"
-kafka_download_url: "https://downloads.apache.org/kafka/{{ kafka_version }}/{{ kafka_package }}.tgz"
-
-# System Configuration
-kafka_user: "kafka"
-kafka_group: "kafka"
-kafka_home: "/opt/kafka"
-kafka_config_dir: "{{ kafka_home }}/config"
-kafka_log_dirs: "/var/kafka-logs"
-kafka_systemd_enabled: true
+# Kafka Configuration
+kafka_version: "2.13-3.6.0"
+kafka_port: 9092
+kafka_data_dir: "{{ kafka_home }}/kafka/data"
+kafka_log_dir: "/var/log/kafka"
+kafka_heap_opts: "-Xmx512m -Xms512m"
+kafka_log_retention_hours: 168
+# Dynamic configuration based on cluster size
+kafka_default_replication_factor: "{{ [groups['kfk']|length, 3] | min }}"
+kafka_num_partitions: "{{ groups['kfk']|length }}"
+offsets_topic_replication_factor: "{{ [groups['kfk']|length, 3] | min }}"
+transaction_state_log_replication_factor: "{{ [groups['kfk']|length, 3] | min }}"
 
 # Network Configuration
-kafka_listeners: "PLAINTEXT://{{ ansible_default_ipv4.address }}:9092"
-kafka_advertised_listeners: "PLAINTEXT://{{ ansible_default_ipv4.address }}:9092"
-kafka_zookeeper_connect: "{{ groups['zookeeper'] | map('extract', hostvars, 'ansible_default_ipv4') | map(attribute='address') | map('regex_replace', '^(.*)$', '\\1:2181') | join(',') }}"
-
-# Performance Tuning
-kafka_heap_opts: "-Xms1G -Xmx1G"
-kafka_jvm_performance_opts: "-server -XX:+UseG1GC -XX:MaxGCPauseMillis=20 -XX:InitiatingHeapOccupancyPercent=35"
-kafka_num_network_threads: 8
-kafka_num_io_threads: 8
 kafka_socket_send_buffer_bytes: 102400
 kafka_socket_receive_buffer_bytes: 102400
 kafka_socket_request_max_bytes: 104857600
-
-# Replication & Reliability
-kafka_default_replication_factor: 3
-kafka_min_insync_replicas: 2
-kafka_num_partitions: 12
-kafka_log_retention_hours: 168
-kafka_log_segment_bytes: 1073741824
-
-# Security Configuration
-kafka_security_enabled: false
-kafka_ssl_enabled: false
-kafka_sasl_enabled: false
-
-# vars
-# OS-specific package mappings
-_kafka_packages:
-  RedHat:
-    - java-11-openjdk-devel
-    - wget
-    - unzip
-  Debian:
-    - openjdk-11-jdk
-    - wget
-    - unzip
-
-# Java paths by OS
-_java_home:
-  RedHat: /usr/lib/jvm/java-11-openjdk
-  Debian: /usr/lib/jvm/java-11-openjdk-amd64
-
-kafka_java_home: "{{ _java_home[ansible_os_family] }}"
-kafka_packages: "{{ _kafka_packages[ansible_os_family] }}"

@@ -1,67 +1,55 @@
-# Server Basics
-broker.id={{ kafka_broker_id }}
-listeners={{ kafka_listeners }}
-advertised.listeners={{ kafka_advertised_listeners }}
-num.network.threads={{ kafka_num_network_threads }}
-num.io.threads={{ kafka_num_io_threads }}
+############################# Server Basics #############################
+broker.id={{ broker_id }}
+listeners=PLAINTEXT://{{ inventory_hostname }}:{{ kafka_port }}
+advertised.listeners=PLAINTEXT://{{ inventory_hostname }}:{{ kafka_port }}
 
-# Socket Server Settings
-socket.send.buffer.bytes={{ kafka_socket_send_buffer_bytes }}
-socket.receive.buffer.bytes={{ kafka_socket_receive_buffer_bytes }}
-socket.request.max.bytes={{ kafka_socket_request_max_bytes }}
+############################# Socket Server Settings #############################
+num.network.threads={{ [3, (ansible_processor_vcpus // 2)] | max }}
+num.io.threads={{ [8, ansible_processor_vcpus] | max }}
+socket.send.buffer.bytes=102400
+socket.receive.buffer.bytes=102400
+socket.request.max.bytes=104857600
 
-# Log Basics
-log.dirs={{ kafka_log_dirs }}
+############################# Log Basics #############################
+log.dirs={{ kafka_data_dir }}
 num.partitions={{ kafka_num_partitions }}
 num.recovery.threads.per.data.dir=1
 
-# Internal Topic Settings
-offsets.topic.replication.factor={{ kafka_default_replication_factor }}
-transaction.state.log.replication.factor={{ kafka_default_replication_factor }}
-transaction.state.log.min.isr={{ kafka_min_insync_replicas }}
+############################# Internal Topic Settings #############################
+offsets.topic.replication.factor={{ offsets_topic_replication_factor }}
+transaction.state.log.replication.factor={{ transaction_state_log_replication_factor }}
+{% if groups['kfk']|length > 1 %}
+transaction.state.log.min.isr={{ [2, (groups['kfk']|length // 2 + 1)] | min }}
+{% else %}
+transaction.state.log.min.isr=1
+{% endif %}
 
-# Log Retention Policy
+############################# Log Retention Policy #############################
 log.retention.hours={{ kafka_log_retention_hours }}
-log.segment.bytes={{ kafka_log_segment_bytes }}
+log.segment.bytes=1073741824
 log.retention.check.interval.ms=300000
 
-{% if kafka_deployment_mode == 'zookeeper' %}
-# ZooKeeper Configuration
-zookeeper.connect={{ kafka_zookeeper_connect }}
+############################# Zookeeper #############################
+zookeeper.connect={% for host in groups['zk'] %}{{ host }}:{{ zookeeper_port }}{% if not loop.last %},{% endif %}{% endfor %}
+
 zookeeper.connection.timeout.ms=18000
-{% endif %}
 
-{% if kafka_deployment_mode == 'kraft' %}
-# KRaft Configuration
-process.roles=broker,controller
-node.id={{ kafka_broker_id }}
-controller.quorum.voters={% for host in groups['kafka_kraft'] %}{{ loop.index }}@{{ hostvars[host]['ansible_default_ipv4']['address'] }}:9093{% if not loop.last %},{% endif %}{% endfor %}
+############################# Group Coordinator Settings #############################
+group.initial.rebalance.delay.ms={{ 0 if groups['kfk']|length == 1 else 3000 }}
 
-listeners=PLAINTEXT://{{ ansible_default_ipv4.address }}:9092,CONTROLLER://{{ ansible_default_ipv4.address }}:9093
-inter.broker.listener.name=PLAINTEXT
-controller.listener.names=CONTROLLER
-log.dirs={{ kafka_log_dirs }}
-{% endif %}
-
-# Replication Settings
+############################# Cluster Settings #############################
+{% if groups['kfk']|length == 1 %}
+# Single broker settings
+auto.create.topics.enable=true
+delete.topic.enable=true
+{% else %}
+# Multi-broker settings
+auto.create.topics.enable=false
+delete.topic.enable=true
 default.replication.factor={{ kafka_default_replication_factor }}
-min.insync.replicas={{ kafka_min_insync_replicas }}
-
-{% if kafka_security_enabled %}
-# Security Configuration
-{% if kafka_ssl_enabled %}
-listeners=SSL://{{ ansible_default_ipv4.address }}:9093
-security.inter.broker.protocol=SSL
-ssl.keystore.location={{ kafka_ssl_keystore_location }}
-ssl.keystore.password={{ kafka_ssl_keystore_password }}
-ssl.key.password={{ kafka_ssl_key_password }}
-ssl.truststore.location={{ kafka_ssl_truststore_location }}
-ssl.truststore.password={{ kafka_ssl_truststore_password }}
+min.insync.replicas={{ [1, (groups['kfk']|length // 2)] | max }}
 {% endif %}
 
-{% if kafka_sasl_enabled %}
-sasl.enabled.mechanisms=SCRAM-SHA-512
-sasl.mechanism.inter.broker.protocol=SCRAM-SHA-512
-security.inter.broker.protocol=SASL_SSL
-{% endif %}
-{% endif %}
+############################# Performance Settings #############################
+replica.fetch.max.bytes=1048576
+message.max.bytes=1000000

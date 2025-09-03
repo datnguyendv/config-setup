@@ -1,0 +1,23 @@
+- name: Update package cache (Debian/Ubuntu)
+  apt:
+    update_cache: true
+    cache_valid_time: 3600
+  when: ansible_os_family == "Debian"
+
+- name: Update package cache (CentOS/RHEL 7)
+  yum:
+    update_cache: true
+  when: ansible_os_family == "RedHat" and ansible_distribution_major_version == "7"
+
+- name: Update package cache (CentOS/RHEL 8+)
+  dnf:
+    update_cache: true
+  when: ansible_os_family == "RedHat" and ansible_distribution_major_version|int >= 8
+
+- name: Update /etc/hosts for cluster communication
+  lineinfile:
+    path: /etc/hosts
+    line: "{{ hostvars[item]['ansible_host'] | default(item) }} {{ hostvars[item]['hostname'] | default(item) }} {{ item }}"
+    regexp: ".*{{ item }}$"
+  loop: "{{ (groups['zk'] + groups['kfk']) | unique }}"
+  when: hostvars[item]['hostname'] is defined

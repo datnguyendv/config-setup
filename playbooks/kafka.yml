@@ -1,18 +1,74 @@
 ---
-- name: Deploy Apache Kafka Infrastructure
-  hosts: all
+# - name: Install and configure Kafka cluster with Zookeeper
+#   hosts: all
+#   become: yes
+#   gather_facts: yes
+#   roles:
+#     - kafka_common
+
+# - name: Configure Zookeeper cluster
+#   hosts: zk
+#   become: yes
+#   serial: "{{ '100%' if groups['zk']|length == 1 else '1' }}"
+#   roles:
+#     - kafka_zookeeper
+
+- name: Configure Kafka cluster  
+  hosts: kfk
   become: yes
-  gather_facts: yes
-  vars:
-    kafka_deployment_mode: "{{ 'kraft' if 'kafka_kraft' in group_names else 'zookeeper' }}"
+  serial: "{{ '100%' if groups['kfk']|length == 1 else '1' }}"
   roles:
-    - role: zookeeper
-      when: kafka_deployment_mode == 'zookeeper' and 'zookeeper' in group_names
-      tags: ['zookeeper']
-    
-    - role: kraft
-      when: kafka_deployment_mode == 'kraft'
-      tags: ['kraft']
-    
-    - role: kafka
-      tags: ['kafka']
+    - kafka
+
+- name: Post-deployment verification
+  hosts: kfk[0]
+  become: yes
+  become_user: "{{ kafka_user }}"
+  vars:
+    test_replication_factor: "{{ [groups['kfk']|length, 3] | min }}"
+    test_partitions: "{{ groups['kfk']|length }}"
+  tasks:
+    - name: Create test topic
+      command: >
+        /opt/kafka/bin/kafka-topics.sh --create 
+        --topic test-topic 
+        --bootstrap-server localhost:{{ kafka_port }}
+        --partitions {{ test_partitions }}
+        --replication-factor {{ test_replication_factor }}
+      register: topic_creation
+      changed_when: "'Created topic' in topic_creation.stdout"
+      failed_when: 
+        - topic_creation.rc != 0
+        - "'already exists' not in topic_creation.stderr"
+
+    - name: List topics
+      command: >
+        /opt/kafka/bin/kafka-topics.sh --list 
+        --bootstrap-server localhost:{{ kafka_port }}
+      register: topic_list
+      changed_when: false
+
+    - name: Describe test topic
+      command: >
+        /opt/kafka/bin/kafka-topics.sh --describe 
+        --topic test-topic
+        --bootstrap-server localhost:{{ kafka_port }}
+      register: topic_details
+      changed_when: false
+
+    - name: Display cluster information
+      debug:
+        msg: |
+          🎉 Kafka Cluster Deployment Successful!
+
+          📊 Cluster Configuration:
+          - Zookeeper nodes: {{ groups['zk']|length }}
+          - Kafka brokers: {{ groups['kfk']|length }}
+          - Test topic partitions: {{ test_partitions }}
+          - Test topic replication: {{ test_replication_factor }}
+
+          📋 Available Topics:
+          {{ topic_list.stdout_lines | join('\n') }}
+
+          🔍 Test Topic Details:
+          {{ topic_details.stdout }}

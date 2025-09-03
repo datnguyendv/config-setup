@@ -1,37 +1,23 @@
 [Unit]
-Description=Apache Kafka Service
+Description=Apache Kafka
 Documentation=https://kafka.apache.org/
-Requires=network.target remote-fs.target
-After=network.target remote-fs.target
-{% if kafka_deployment_mode == 'zookeeper' %}
-Wants=zookeeper.service
-After=zookeeper.service
-{% endif %}
+After=network.target zookeeper.service
+Requires=zookeeper.service
 
 [Service]
-Type=notify
+Type=simple
 User={{ kafka_user }}
 Group={{ kafka_group }}
-Environment=JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
+Environment=JAVA_HOME={{ java_path_debian.files[0].path if ansible_os_family == "Debian" else java_path_redhat.files[0].path }}
 Environment=KAFKA_HEAP_OPTS="{{ kafka_heap_opts }}"
-Environment=KAFKA_JVM_PERFORMANCE_OPTS="{{ kafka_jvm_performance_opts }}"
-ExecStart={{ kafka_home }}/bin/kafka-server-start.sh {{ kafka_config_dir }}/server.properties
-ExecStop={{ kafka_home }}/bin/kafka-server-stop.sh
+Environment=KAFKA_JVM_PERFORMANCE_OPTS="-server -XX:+UseG1GC -XX:MaxGCPauseMillis=20 -XX:InitiatingHeapOccupancyPercent=35 -XX:+ExplicitGCInvokesConcurrent -Djava.awt.headless=true"
+Environment=KAFKA_LOG_DIR={{ kafka_log_dir }}
+ExecStart=/opt/kafka/bin/kafka-server-start.sh /opt/kafka/config/server.properties
+ExecStop=/opt/kafka/bin/kafka-server-stop.sh
+TimeoutSec=60
 Restart=on-failure
-RestartSec=10
-StandardOutput=journal
-StandardError=journal
-SyslogIdentifier=kafka
-KillMode=process
-TimeoutStopSec=300
-
-# Security
-NoNewPrivileges=true
-ProtectSystem=strict
-ProtectHome=true
-ReadWritePaths={{ kafka_log_dirs }} {{ kafka_home }}/logs
-PrivateTmp=true
+RestartSec=5
+LimitNOFILE=65536
 
 [Install]
 WantedBy=multi-user.target
-

@@ -1,7 +1,0 @@
-#!/bin/bash
-
-export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
-export ZOO_LOG_DIR={{ zookeeper_log_dir }}
-export ZOOCFGDIR={{ zookeeper_home }}/conf
-export SERVER_JVMFLAGS="-Xms{{ zookeeper_heap_size }} -Xmx{{ zookeeper_heap_size }} -verbose:gc -XX:+PrintGCDetails -XX:+PrintGCTimeStamps -Xloggc:{{ zookeeper_log_dir }}/zookeeper-gc.log -XX:+UseGCLogFileRotation -XX:NumberOfGCLogFiles=16 -XX:GCLogFileSize=16M"
-
