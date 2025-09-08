@@ -1,0 +1,8 @@
+---
+- name: Generate cluster UUID for KRaft
+  include_tasks: cluster-uuid.yml
+  run_once: true
+  delegate_to: "{{ groups['kafka_kraft'][0] }}"
+
+- name: Format storage directories
+  include_tasks: format-storage.yml

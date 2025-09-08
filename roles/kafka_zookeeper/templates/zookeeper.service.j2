@@ -1,0 +1,21 @@
+[Unit]
+Description=Apache Zookeeper
+Documentation=https://zookeeper.apache.org/
+After=network.target
+
+[Service]
+Type=forking
+User={{ kafka_user }}
+Group={{ kafka_group }}
+Environment=JAVA_HOME={{ java_path_debian.files[0].path if ansible_os_family == "Debian" else java_path_redhat.files[0].path }}
+Environment=ZOO_LOG_DIR={{ zookeeper_log_dir }}
+Environment=ZOO_LOG4J_PROP=INFO,ROLLINGFILE
+ExecStart=/opt/zookeeper/bin/zkServer.sh start /opt/zookeeper/conf/zoo.cfg
+ExecStop=/opt/zookeeper/bin/zkServer.sh stop /opt/zookeeper/conf/zoo.cfg
+ExecReload=/opt/zookeeper/bin/zkServer.sh restart /opt/zookeeper/conf/zoo.cfg
+TimeoutSec=30
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

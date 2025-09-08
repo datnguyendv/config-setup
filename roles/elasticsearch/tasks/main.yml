@@ -5,7 +5,7 @@
   failed_when: ansible_os_family not in ['Debian', 'RedHat']
 
 # Core installation and configuration
-- name: Mongodb installation
+- name: Elasticsearch installation
   import_tasks: install.yml
 
 - name: Configure cluster discovery

@@ -8,7 +8,7 @@
   until:
     - cluster_health.status == 200
     - cluster_health.json.status in ['yellow', 'green']
-    - cluster_health.json.number_of_nodes == (groups['elasticsearch'] | length)
+    - cluster_health.json.number_of_nodes == (groups['es'] | length)
   retries: 60
   delay: 10
 
@@ -18,7 +18,7 @@
     method: GET
   register: cluster_nodes_info
   run_once: true
-  delegate_to: "{{ groups['elasticsearch'][0] }}"
+  delegate_to: "{{ groups['es'][0] }}"
 
 - name: Display cluster status
   debug:
@@ -39,7 +39,7 @@
     method: GET
   register: master_info
   run_once: true
-  delegate_to: "{{ groups['elasticsearch'][0] }}"
+  delegate_to: "{{ groups['es'][0] }}"
 
 - name: Display master information
   debug:

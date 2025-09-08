@@ -1,0 +1,58 @@
+---
+- name: Install Java on Debian/Ubuntu
+  apt:
+    name: "openjdk-{{ java_version }}-jdk"
+    state: present
+    update_cache: true
+  when: ansible_os_family == "Debian"
+
+- name: Install Java on CentOS/RHEL 7
+  yum:
+    name: "java-{{ java_version }}-openjdk"
+    state: present
+  when: ansible_os_family == "RedHat" and ansible_distribution_major_version == "7"
+
+- name: Install Java on CentOS/RHEL 8+
+  dnf:
+    name: "java-{{ java_version }}-openjdk"
+    state: present
+  when: ansible_os_family == "RedHat" and ansible_distribution_major_version|int >= 8
+
+- name: Find Java installation path for Debian/Ubuntu
+  find:
+    paths: /usr/lib/jvm
+    patterns: "java-{{ java_version }}-openjdk*"
+    file_type: directory
+  register: java_path_debian
+  when: ansible_os_family == "Debian"
+
+- name: Find Java installation path for CentOS/RHEL
+  find:
+    paths: /usr/lib/jvm
+    patterns: "java-{{ java_version }}-openjdk*"
+    file_type: directory
+  register: java_path_redhat
+  when: ansible_os_family == "RedHat"
+
+- name: Set JAVA_HOME environment variable for Debian/Ubuntu
+  lineinfile:
+    path: /etc/environment
+    regexp: '^JAVA_HOME'
+    line: 'JAVA_HOME={{ java_path_debian.files[0].path }}'
+  when: ansible_os_family == "Debian" and java_path_debian.files
+
+- name: Set JAVA_HOME environment variable for CentOS/RHEL
+  lineinfile:
+    path: /etc/environment
+    regexp: '^JAVA_HOME'
+    line: 'JAVA_HOME={{ java_path_redhat.files[0].path }}'
+  when: ansible_os_family == "RedHat" and java_path_redhat.files
+
+- name: Verify Java installation
+  command: java -version
+  register: java_version_output
+  changed_when: false
+
+- name: Display Java version
+  debug:
+    msg: "{{ java_version_output.stderr_lines[0] }}"

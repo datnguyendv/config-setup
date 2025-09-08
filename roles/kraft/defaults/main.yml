@@ -1,0 +1,8 @@
+---
+# KRaft specific settings
+kraft_cluster_uuid: ""
+kraft_format_storage: true
+kraft_node_roles: "broker,controller"
+kraft_controller_quorum_voters: ""
+kraft_controller_listener_names: "CONTROLLER"
+kraft_inter_broker_listener_name: "PLAINTEXT"

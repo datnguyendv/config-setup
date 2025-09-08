@@ -3,10 +3,8 @@
   set_fact:
     elasticsearch_seed_hosts: >-
       {{
-        groups['elasticsearch'] |
-        map('extract', hostvars, 'ansible_default_ipv4') |
-        map(attribute='address') |
-        map('regex_replace', '^(.*)$', '\1:' + elasticsearch_transport_port|string) |
+        groups['es'] |
+        map('extract', hostvars, 'hostname') |
         list
       }}
   when: elasticsearch_seed_hosts | length == 0
@@ -14,11 +12,7 @@
 - name: Generate initial master nodes from masters group
   set_fact:
     elasticsearch_initial_master_nodes: >-
-      {{
-        (groups['elasticsearch_masters'] | default(groups['elasticsearch'][:3])) |
-        map('extract', hostvars, 'elasticsearch_node_name') |
-        list
-      }}
+      {{ (groups['elasticsearch_masters'] | default(groups['es'][:3])) | map('extract', hostvars, 'hostname') | list }}
   when: elasticsearch_initial_master_nodes | length == 0
 
 - name: Debug cluster discovery settings

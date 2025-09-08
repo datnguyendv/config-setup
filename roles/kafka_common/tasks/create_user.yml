@@ -1,0 +1,66 @@
+---
+- name: Create kafka group
+  group:
+    name: "{{ kafka_group }}"
+    state: present
+    system: true
+
+- name: Create kafka user
+  user:
+    name: "{{ kafka_user }}"
+    group: "{{ kafka_group }}"
+    system: true
+    shell: /bin/false
+    home: "{{ kafka_home }}"
+    createhome: false
+    comment: "Kafka service user"
+
+- name: Create kafka home directory
+  file:
+    path: "{{ kafka_home }}"
+    state: directory
+    owner: "{{ kafka_user }}"
+    group: "{{ kafka_group }}"
+    mode: '0755'
+
+- name: Install common packages for Debian/Ubuntu
+  apt:
+    name:
+      - curl
+      - tar
+    state: present
+    update_cache: true
+  when: ansible_os_family == "Debian"
+
+- name: Install common packages for CentOS/RHEL
+  yum:
+    name:
+      - curl
+      - tar
+    state: present
+  when: ansible_os_family == "RedHat"
+
+# - name: Set system limits for kafka user
+#   lineinfile:
+#     path: /etc/security/limits.conf
+#     line: "{{ item }}"
+#     create: true
+#   loop:
+#     - "{{ kafka_user }} soft nofile 65536"
+#     - "{{ kafka_user }} hard nofile 65536"
+#     - "{{ kafka_user }} soft nproc 32768"
+#     - "{{ kafka_user }} hard nproc 32768"
+#
+# - name: Configure sysctl for better network performance
+#   sysctl:
+#     name: "{{ item.key }}"
+#     value: "{{ item.value }}"
+#     state: present
+#     reload: true
+#   loop:
+#     - { key: "net.core.rmem_default", value: "262144" }
+#     - { key: "net.core.rmem_max", value: "16777216" }
+#     - { key: "net.core.wmem_default", value: "262144" }
+#     - { key: "net.core.wmem_max", value: "16777216" }
+#     - { key: "net.ipv4.tcp_rmem", value: "4096 65536 16777216" }
+#     - { key: "net.ipv4.tcp_wmem", value: "4096 65536 16777216" }

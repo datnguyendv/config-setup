@@ -1,0 +1,34 @@
+---
+- name: Install and configure Kafka cluster with Zookeeper
+  hosts: all
+  become: yes
+  gather_facts: yes
+  roles:
+    - kafka_common
+
+- name: Configure Zookeeper cluster
+  hosts: zk
+  become: yes
+  serial: "{{ '100%' if groups['zk']|length == 1 else '1' }}"
+  roles:
+    - kafka_zookeeper
+
+- name: Configure Kafka cluster
+  hosts: kfk
+  become: true
+  serial: "{{ '100%' if groups['kfk']|length == 1 else '1' }}"
+  roles:
+    - kafka
+
+- name: Post-deployment verification
+  hosts: kfk[0]
+  become: true
+  tasks:
+    - name: Display cluster information
+      debug:
+        msg: |
+          🎉 Kafka Cluster Deployment Successful!
+
+          📊 Cluster Configuration:
+          - Zookeeper nodes: {{ groups['zk']|length }}
+          - Kafka brokers: {{ groups['kfk']|length }}

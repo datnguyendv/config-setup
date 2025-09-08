@@ -7,55 +7,55 @@
     group: "{{ elasticsearch_group }}"
     mode: '0750'
 
-- name: Check if CA exists
-  stat:
-    path: "{{ elasticsearch_config_dir }}/certs/elastic-stack-ca.p12"
-  register: ca_exists
+- name: Setup Elasticsearch bootstrap password
+  when:
+    - elasticsearch_security_enabled | default(false)
+    - elasticsearch_bootstrap_password is defined
+  block:
+    - name: Create keystore if not exists
+      shell: /usr/share/elasticsearch/bin/elasticsearch-keystore create
+      args:
+        creates: /etc/elasticsearch/elasticsearch.keystore
 
-- name: Generate CA certificate (on first master only)
+    - name: Add bootstrap password to keystore
+      shell: |
+        echo "{{ elasticsearch_bootstrap_password }}" | \
+        /usr/share/elasticsearch/bin/elasticsearch-keystore add -x 'bootstrap.password' --stdin --force
+      no_log: true
+
+    - name: Set keystore permissions
+      file:
+        path: /etc/elasticsearch/elasticsearch.keystore
+        owner: elasticsearch
+        group: elasticsearch
+        mode: '0660'
+
+- name: Generate node-specific certificates
   shell: |
-    {{ elasticsearch_home }}/bin/elasticsearch-certutil ca \
-      --out {{ elasticsearch_config_dir }}/certs/elastic-stack-ca.p12 \
-      --pass ""
-  when:
-    - not ca_exists.stat.exists
-    - inventory_hostname == groups['elasticsearch'][0] or elasticsearch_deployment_mode == 'single-node'
-  become_user: "{{ elasticsearch_user }}"
+    /usr/share/elasticsearch/bin/elasticsearch-certutil cert \
+      --ca-cert /etc/elasticsearch/certs/ca/ca.crt \
+      --ca-key /etc/elasticsearch/certs/ca/ca.key \
+      --pem \
+      --name {{ hostname }} \
+      --dns {{ hostname }} \
+      --ip {{ ansible_default_ipv4.address }} \
+      --out /etc/elasticsearch/certs/{{ hostname }}-certs.zip
+  delegate_to: "{{ groups['es'][0] }}"
+  run_once: true
 
-- name: Generate node certificates (on first master only)
-  shell: |
-    {{ elasticsearch_home }}/bin/elasticsearch-certutil cert \
-      --ca {{ elasticsearch_config_dir }}/certs/elastic-stack-ca.p12 \
-      --ca-pass "" \
-      --out {{ elasticsearch_config_dir }}/certs/elastic-certificates.p12 \
-      --pass ""
-  when:
-    - not ca_exists.stat.exists
-    - inventory_hostname == groups['elasticsearch'][0] or elasticsearch_deployment_mode == 'single-node'
-  become_user: "{{ elasticsearch_user }}"
+- name: Extract and deploy certificates
+  unarchive:
+    src: /etc/elasticsearch/certs/{{ hostname }}-certs.zip
+    dest: /etc/elasticsearch/certs/
+    remote_src: true
 
-- name: Fetch certificates from first master
-  fetch:
-    src: "{{ elasticsearch_config_dir }}/certs/{{ item }}"
-    dest: "/tmp/elasticsearch-certs/{{ item }}"
-    flat: true
+- name: Set certificate permissions
+  file:
+    path: "{{ item.path }}"
+    owner: elasticsearch
+    group: elasticsearch
+    mode: "{{ item.mode }}"
   loop:
-    - elastic-stack-ca.p12
-    - elastic-certificates.p12
-  when:
-    - inventory_hostname == groups['elasticsearch'][0] or elasticsearch_deployment_mode == 'single-node'
-    - elasticsearch_deployment_mode == 'cluster'
-
-- name: Distribute certificates to all nodes
-  copy:
-    src: "/tmp/elasticsearch-certs/{{ item }}"
-    dest: "{{ elasticsearch_config_dir }}/certs/{{ item }}"
-    owner: "{{ elasticsearch_user }}"
-    group: "{{ elasticsearch_group }}"
-    mode: '0644'
-  loop:
-    - elastic-stack-ca.p12
-    - elastic-certificates.p12
-  when:
-    - elasticsearch_deployment_mode == 'cluster'
-    - inventory_hostname != groups['elasticsearch'][0]
+    - { path: "/etc/elasticsearch/certs/{{ inventory_hostname }}/{{ hostname }}.key", mode: "0600" }
+    - { path: "/etc/elasticsearch/certs/{{ inventory_hostname }}/{{ hostname }}.crt", mode: "0644" }
+    - { path: "/etc/elasticsearch/certs/ca/ca.crt", mode: "0644" }

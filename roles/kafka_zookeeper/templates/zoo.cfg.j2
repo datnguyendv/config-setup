@@ -1,0 +1,29 @@
+# Basic settings
+tickTime=2000
+{% if groups['zk']|length > 1 %}
+initLimit=10
+syncLimit=5
+{% endif %}
+dataDir={{ zookeeper_data_dir }}
+clientPort={{ zookeeper_port }}
+maxClientCnxns={{ zookeeper_max_client_cnxns }}
+4lw.commands.whitelist=ruok,stat,conf,isro
+# Performance settings
+autopurge.purgeInterval=1
+autopurge.snapRetainCount=10
+
+# Cluster configuration - only if multiple nodes
+{% if groups['zk']|length > 1 %}
+{% for host in groups['zk'] %}
+server.{{ hostvars[host]['zookeeper_id'] }}={{ host }}:{{ zookeeper_peer_port }}:{{ zookeeper_leader_port }}
+{% endfor %}
+{% endif %}
+
+# Advanced settings
+preAllocSize=65536
+snapCount=100000
+maxSessionTimeout=40000
+{% if groups['zk']|length == 1 %}
+# Single node specific settings
+standaloneEnabled=true
+{% endif %}

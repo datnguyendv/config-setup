@@ -1,0 +1,8 @@
+- name: update instance
+  import_tasks: update_package.yml
+
+- name: Kafka user setup
+  import_tasks: create_user.yml
+
+- name: Java installation
+  import_tasks: java_setup.yml
