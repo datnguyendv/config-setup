@@ -3,7 +3,7 @@
   group:
     name: "{{ kafka_group }}"
     state: present
-    system: yes
+    system: true
 
 - name: Create kafka user
   user:

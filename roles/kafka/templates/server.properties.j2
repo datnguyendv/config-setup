@@ -1,7 +1,7 @@
 ############################# Server Basics #############################
 broker.id={{ broker_id }}
-listeners=PLAINTEXT://{{ inventory_hostname }}:{{ kafka_port }}
-advertised.listeners=PLAINTEXT://{{ inventory_hostname }}:{{ kafka_port }}
+listeners=PLAINTEXT://0.0.0.0:{{ kafka_port }}
+advertised.listeners=PLAINTEXT://{{ ansible_default_ipv4.address }}:{{ kafka_port }}
 
 ############################# Socket Server Settings #############################
 num.network.threads={{ [3, (ansible_processor_vcpus // 2)] | max }}
@@ -30,7 +30,7 @@ log.segment.bytes=1073741824
 log.retention.check.interval.ms=300000
 
 ############################# Zookeeper #############################
-zookeeper.connect={% for host in groups['zk'] %}{{ host }}:{{ zookeeper_port }}{% if not loop.last %},{% endif %}{% endfor %}
+zookeeper.connect={% for host in groups['zk'] %}{{ hostvars[host]['hostname'] }}:{{ zookeeper_port }}{% if not loop.last %},{% endif %}{% endfor %}
 
 zookeeper.connection.timeout.ms=18000
 
