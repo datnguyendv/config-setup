@@ -1,0 +1,14 @@
+- name: Install and configure exporter for Elasticsearch
+  hosts: all
+  become: true
+  roles:
+    - elasticsearch-exporter
+
+- name: Register to metric server
+  hosts: all
+  become: true
+  roles:
+    - metric-register
+  vars:
+    consul_service_name: "es"
+    consul_service_port: "9108"
