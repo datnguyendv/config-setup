@@ -1,6 +1,7 @@
 - name: Install and configure exporter for Elasticsearch
   hosts: all
   become: true
+  gather_facts: true
   roles:
     - elasticsearch-exporter
 
