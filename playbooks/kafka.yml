@@ -4,14 +4,14 @@
   become: yes
   gather_facts: yes
   roles:
-    - kafka_common
+    - kafka-common
 
 - name: Configure Zookeeper cluster
   hosts: zk
   become: yes
   serial: "{{ '100%' if groups['zk']|length == 1 else '1' }}"
   roles:
-    - kafka_zookeeper
+    - kafka-zookeeper
 
 - name: Configure Kafka cluster
   hosts: kfk
