@@ -77,33 +77,3 @@
     state: started
     enabled: true
     daemon_reload: true
-
-# - name: Verify Zookeeper is running (single node)
-#   command: echo "ruok" | nc localhost {{ zookeeper_port }}
-#   register: zk_status
-#   changed_when: false
-#   failed_when: zk_status.stdout != "imok"
-#   retries: 5
-#   delay: 5
-#   when: groups['zk']|length == 1
-#
-# - name: Verify Zookeeper cluster status (multi-node)
-#   command: echo "stat" | nc localhost {{ zookeeper_port }}
-#   register: zk_cluster_status
-#   changed_when: false
-#   retries: 5
-#   delay: 5
-#   when: groups['zk']|length > 1
-#
-# - name: Display cluster info
-#   debug:
-#     msg: |
-#       Zookeeper cluster configuration:
-#       - Cluster size: {{ groups['zk']|length }}
-#       - Node role: {{ 'Standalone' if groups['zk']|length == 1 else 'Cluster member' }}
-#       - Node ID: {{ zookeeper_id if groups['zk']|length > 1 else 'N/A (standalone)' }}
-#
-# - name: Clean up downloaded files
-#   file:
-#     path: "/tmp/zookeeper-{{ zookeeper_version }}.tar.gz"
-#     state: absent
