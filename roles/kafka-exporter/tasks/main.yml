@@ -1,0 +1,17 @@
+- name: Run kafka-exporter container (cluster monitoring)
+  community.docker.docker_container:
+    name: kafka-exporter
+    image: "{{ exporter_image_name }}:{{ exporter_image_version }}"
+    state: started
+    restart_policy: always
+    published_ports:
+      - "{{ exporter_port }}:9308"
+    command: >-
+      {% for host in groups['kfk'] -%}
+      --kafka.server={{ hostvars[host]['hostname'] }}:{{ kafka_port | default('9092') }}{{ ' ' }}
+      {%- endfor -%}
+      --web.listen-address=:9308
+      --log.level=info
+    env:
+      GOMAXPROCS: "1"
+  when: inventory_hostname == groups['kfk'][0]
