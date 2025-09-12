@@ -1,0 +1,112 @@
+# ===========================================
+# KRaft Mode Server Configuration
+# Combined Broker + Controller Setup
+# ===========================================
+
+############################# Server Basics #############################
+
+# The role of this server. Setting this puts us in KRaft mode
+process.roles=broker,controller
+
+# The node id associated with this instance's roles
+node.id={{ broker_id }}
+
+# The connect string for the controller quorum
+controller.quorum.voters={% for host in groups['kfk'] %}{{ hostvars[host]['broker_id'] }}@{{ hostvars[host]['ansible_default_ipv4']['address'] }}:{{ kafka_controller_port | default(9093) }}{% if not loop.last %},{% endif %}{% endfor %}
+
+############################# Socket Server Settings #############################
+
+# The address the socket server listens on
+# FORMAT: listeners = listener_name://host_name:port
+listeners=PLAINTEXT://{{ ansible_default_ipv4.address }}:{{ kafka_port }},CONTROLLER://{{ ansible_default_ipv4.address }}:{{ kafka_controller_port | default(9093) }}
+
+# Hostname and port the broker will advertise to producers and consumers
+advertised.listeners=PLAINTEXT://{{ ansible_default_ipv4.address }}:{{ kafka_port }}
+
+# Maps listener names to security protocols
+listener.security.protocol.map=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT,SSL:SSL,SASL_PLAINTEXT:SASL_PLAINTEXT,SASL_SSL:SASL_SSL
+
+# Name of listener used for communication between controllers
+controller.listener.names=CONTROLLER
+
+# Listener name that the broker will use for inter-broker communication
+inter.broker.listener.name=PLAINTEXT
+
+############################# Log Basics #############################
+
+# A comma separated list of directories under which to store log files
+log.dirs={{ kafka_data_dir }}
+
+# The directory where the KRaft metadata logs are stored
+metadata.log.dir={{ kraft_metadata_dir | default('/opt/kafka/kraft-metadata') }}
+
+# The default number of log partitions per topic
+num.partitions={{ kafka_num_partitions | default(1) }}
+
+# The number of threads per data directory to be used for log recovery at startup and flushing at shutdown
+num.recovery.threads.per.data.dir={{ kafka_num_recovery_threads | default(1) }}
+
+############################# Internal Topic Settings #############################
+
+# Replication factor for internal topics "__consumer_offsets" and "__transaction_state"
+offsets.topic.replication.factor={{ kafka_offsets_topic_replication_factor | default(1) }}
+transaction.state.log.replication.factor={{ kafka_transaction_log_replication_factor | default(1) }}
+transaction.state.log.min.isr={{ kafka_transaction_log_min_isr | default(1) }}
+
+# The default replication factor for automatically created topics
+default.replication.factor={{ kafka_default_replication_factor | default(1) }}
+
+# The minimum number of replicas that must acknowledge a write
+min.insync.replicas={{ kafka_min_insync_replicas | default(1) }}
+
+############################# Log Flush Policy #############################
+
+# The number of messages to accept before forcing a flush of data to disk
+log.flush.interval.messages={{ kafka_log_flush_interval_messages | default(10000) }}
+
+# The maximum amount of time a message can sit in a log before we force a flush
+log.flush.interval.ms={{ kafka_log_flush_interval_ms | default(1000) }}
+
+############################# Log Retention Policy #############################
+
+# The minimum age of a log file to be eligible for deletion due to age
+log.retention.hours={{ kafka_log_retention_hours | default(168) }}
+
+# The maximum size of a log segment file. When this size is reached a new log segment will be created.
+log.segment.bytes={{ kafka_log_segment_bytes | default(1073741824) }}
+
+# The interval at which log segments are checked to see if they can be deleted
+log.retention.check.interval.ms={{ kafka_log_retention_check_interval_ms | default(300000) }}
+
+############################# Socket Server Settings #############################
+
+# The number of threads that the server uses for receiving requests from the network and sending responses to the network
+num.network.threads={{ kafka_num_network_threads | default(3) }}
+
+# The number of threads that the server uses for processing requests, which may include disk I/O
+num.io.threads={{ kafka_num_io_threads | default(8) }}
+
+# The send buffer (SO_SNDBUF) used by the socket server
+socket.send.buffer.bytes={{ kafka_socket_send_buffer_bytes | default(102400) }}
+
+# The receive buffer (SO_RCVBUF) used by the socket server
+socket.receive.buffer.bytes={{ kafka_socket_receive_buffer_bytes | default(102400) }}
+
+# The maximum size of a request that the socket server will accept (protection against OOM)
+socket.request.max.bytes={{ kafka_socket_request_max_bytes | default(104857600) }}
+
+############################# Group Coordinator Settings #############################
+
+# The following configuration specifies the time, in milliseconds, that the GroupCoordinator will delay the initial consumer rebalance.
+group.initial.rebalance.delay.ms={{ kafka_group_initial_rebalance_delay_ms | default(0) }}
+
+############################# KRaft Specific Settings #############################
+
+# The maximum time to wait for log writes to be acknowledged
+replica.lag.time.max.ms={{ kafka_replica_lag_time_max_ms | default(30000) }}
+
+# The frequency with which the log cleaner checks whether any log is eligible for deletion
+log.cleaner.backoff.ms={{ kafka_log_cleaner_backoff_ms | default(15000) }}
+
+# Enable log compaction for KRaft metadata topics
+log.cleanup.policy={{ kafka_log_cleanup_policy | default("delete") }}

@@ -1,0 +1,52 @@
+---
+# KRaft-specific setup tasks
+- name: Set KRaft facts
+  set_fact:
+    kraft_mode: true
+    kafka_controller_nodes: "{{ groups['kfk'] }}"
+
+- name: Generate cluster UUID (once per cluster)
+  shell: /opt/kafka/bin/kafka-storage.sh random-uuid
+  register: cluster_uuid_result
+  run_once: true
+  delegate_to: "{{ groups['kfk'] }}"
+  changed_when: false
+
+- name: Set cluster UUID fact
+  set_fact:
+    kafka_cluster_uuid: "{{ cluster_uuid_result.stdout }}"
+
+- name: Create KRaft config directory
+  file:
+    path: /opt/kafka/config/kraft
+    state: directory
+    owner: "{{ kafka_user }}"
+    group: "{{ kafka_group }}"
+    mode: '0755'
+
+- name: Configure KRaft server properties
+  template:
+    src: kraft-server.properties.j2
+    dest: /opt/kafka/config/kraft/server.properties
+    owner: "{{ kafka_user }}"
+    group: "{{ kafka_group }}"
+    mode: '0644'
+    backup: true
+  notify: restart kafka
+
+- name: Format storage directories (KRaft)
+  shell: |
+    /opt/kafka/bin/kafka-storage.sh format \
+    -t {{ kafka_cluster_uuid }} \
+    -c /opt/kafka/config/kraft/server.properties
+  args:
+    creates: "{{ kraft_metadata_dir | default('/opt/kafka/kraft-metadata') }}/meta.properties"
+
+- name: Create KRaft systemd service
+  template:
+    src: "{{ 'kafka-kraft.service.j2' if kraft_mode | default(false) else 'kafka.service.j2' }}"
+    dest: /etc/systemd/system/kafka.service
+    mode: '0644'
+  notify:
+    - reload systemd
+    - restart kafka

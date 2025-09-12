@@ -12,6 +12,7 @@
   serial: "{{ '100%' if groups['zk']|length == 1 else '1' }}"
   roles:
     - kafka-zookeeper
+  when: groups['zk'] is defined and groups['zk']|length > 0
 
 - name: Configure Kafka cluster
   hosts: kfk
@@ -20,15 +21,10 @@
   roles:
     - kafka
 
-- name: Post-deployment verification
-  hosts: kfk[0]
+- name: Configure Kafka cluster (KRaft mode)
+  hosts: kfk
   become: true
-  tasks:
-    - name: Display cluster information
-      debug:
-        msg: |
-          🎉 Kafka Cluster Deployment Successful!
-
-          📊 Cluster Configuration:
-          - Zookeeper nodes: {{ groups['zk']|length }}
-          - Kafka brokers: {{ groups['kfk']|length }}
+  serial: "{{ '100%' if groups['kfk']|length == 1 else '1' }}"
+  roles:
+    - kafka-kraft
+  when: groups['zk'] is not defined or groups['zk']|length == 0

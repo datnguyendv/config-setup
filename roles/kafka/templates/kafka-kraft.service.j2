@@ -1,0 +1,46 @@
+[Unit]
+Description=Apache Kafka Server (KRaft Mode)
+Documentation=http://kafka.apache.org/documentation.html
+Requires=network.target remote-fs.target
+After=network.target remote-fs.target
+
+[Service]
+Type=notify
+User={{ kafka_user }}
+Group={{ kafka_group }}
+
+# Environment variables
+Environment="JAVA_HOME={{ java_home | default('/usr/lib/jvm/java-17-openjdk') }}"
+Environment="KAFKA_HEAP_OPTS={{ kafka_heap_opts | default('-Xmx2G -Xms2G') }}"
+Environment="KAFKA_JVM_PERFORMANCE_OPTS={{ kafka_jvm_performance_opts | default('-server -XX:+UseG1GC -XX:MaxGCPauseMillis=20 -XX:InitiatingHeapOccupancyPercent=35 -XX:+ExplicitGCInvokesConcurrent -XX:MaxInlineLevel=15 -Djava.awt.headless=true') }}"
+Environment="KAFKA_GC_LOG_OPTS={{ kafka_gc_log_opts | default('-Xlog:gc*:logs/kafkaServer-gc.log:time,level,tags -Xlog:gc:gc.log:time') }}"
+Environment="KAFKA_JMX_OPTS={{ kafka_jmx_opts | default('-Dcom.sun.management.jmxremote -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false -Dcom.sun.management.jmxremote.port=9999') }}"
+Environment="KAFKA_OPTS={{ kafka_opts | default('') }}"
+
+# Working directory
+WorkingDirectory=/opt/kafka
+
+# Command to start Kafka
+ExecStart=/opt/kafka/bin/kafka-server-start.sh /opt/kafka/config/kraft/server.properties
+
+# Command to stop Kafka gracefully
+ExecStop=/opt/kafka/bin/kafka-server-stop.sh
+
+# Restart policy
+Restart=on-abnormal
+RestartSec=10
+
+# Timeout settings
+TimeoutStartSec=300
+TimeoutStopSec=180
+
+# Resource limits
+LimitNOFILE={{ kafka_nofile_limit | default(65536) }}
+LimitNPROC={{ kafka_nproc_limit | default(65536) }}
+
+# Security settings
+NoNewPrivileges=true
+PrivateTmp=yes
+
+[Install]
+WantedBy=multi-user.target

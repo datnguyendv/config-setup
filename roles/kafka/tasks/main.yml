@@ -10,6 +10,7 @@
     - /opt/kafka
     - "{{ kafka_data_dir }}"
     - "{{ kafka_log_dir }}"
+    - "{{ kraft_metadata_dir | default('/opt/kafka/kraft-metadata') if (groups['zk'] is not defined or groups['zk']|length == 0) else omit }}"
 
 - name: Download Kafka
   get_url:
@@ -28,7 +29,13 @@
     extra_opts: [--strip-components=1]
     creates: /opt/kafka/bin/kafka-server-start.sh
 
-- name: Configure Kafka server properties
+# NEW: KRaft mode setup
+- name: Setup KRaft mode
+  include_tasks: kraft_setup.yml
+  when: groups['zk'] is not defined or groups['zk']|length == 0
+
+# EXISTING: ZooKeeper mode (keep current logic)
+- name: Configure Kafka server properties (ZooKeeper mode)
   template:
     src: server.properties.j2
     dest: /opt/kafka/config/server.properties
@@ -37,6 +44,16 @@
     mode: '0644'
     backup: true
   notify: restart kafka
+  when: groups['zk'] is defined and groups['zk']|length > 0
+# - name: Configure Kafka server properties
+#   template:
+#     src: server.properties.j2
+#     dest: /opt/kafka/config/server.properties
+#     owner: "{{ kafka_user }}"
+#     group: "{{ kafka_group }}"
+#     mode: '0644'
+#     backup: true
+#   notify: restart kafka
 
 - name: Configure Kafka log4j properties
   template:
@@ -62,13 +79,6 @@
     state: started
     enabled: true
     daemon_reload: true
-
-# - name: Wait for Kafka to be ready
-#   wait_for:
-#     port: "{{ kafka_port }}"
-#     host: "{{ ansible_host }}"
-#     delay: 15
-#     timeout: 120
 
 - name: Verify Kafka is running
   command: /opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:{{ kafka_port }}
