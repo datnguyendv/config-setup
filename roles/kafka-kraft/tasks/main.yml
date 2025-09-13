@@ -1,4 +1,5 @@
 ---
+# Kafka Common Have this -----
 - name: Install dependencies (Debian)
   apt:
     name: "{{ debian_packages }}"
@@ -24,7 +25,9 @@
     shell: /bin/bash
     home: "{{ kafka_home }}"
     create_home: false
+# ---------------------------
 
+# Roles kafka have this ---
 - name: Create kafka directories
   file:
     path: "{{ item }}"
@@ -67,6 +70,7 @@
     owner: "{{ kafka_user }}"
     group: "{{ kafka_group }}"
   when: not kafka_installed.stat.exists
+# -----------------------
 
 - name: Generate controller quorum voters list
   set_fact:
