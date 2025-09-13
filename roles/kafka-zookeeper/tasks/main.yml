@@ -1,75 +1,10 @@
 ---
-- name: Create Zookeeper directories
-  file:
-    path: "{{ item }}"
-    state: directory
-    owner: "{{ kafka_user }}"
-    group: "{{ kafka_group }}"
-    mode: '0755'
-  loop:
-    - /opt/zookeeper
-    - "{{ zookeeper_data_dir }}"
-    - "{{ zookeeper_log_dir }}"
-
-- name: Download Zookeeper
-  get_url:
-    url: "https://www.apache.org/dyn/closer.lua/zookeeper/zookeeper-{{ zookeeper_version }}/apache-zookeeper-{{ zookeeper_version }}-bin.tar.gz"
-    dest: "/tmp/zookeeper-{{ zookeeper_version }}.tar.gz"
-    mode: '0644'
-    timeout: 300
-  retries: 3
-  delay: 10
-
-- name: Extract Zookeeper
-  unarchive:
-    src: "/tmp/zookeeper-{{ zookeeper_version }}.tar.gz"
-    dest: /opt/zookeeper
-    remote_src: true
-    owner: "{{ kafka_user }}"
-    group: "{{ kafka_group }}"
-    extra_opts: [--strip-components=1]
-    creates: /opt/zookeeper/bin/zkServer.sh
-
-# Only create myid for multi-node clusters
-- name: Create Zookeeper myid file (multi-node only)
-  template:
-    src: myid.j2
-    dest: "{{ zookeeper_data_dir }}/myid"
-    owner: "{{ kafka_user }}"
-    group: "{{ kafka_group }}"
-    mode: '0644'
-  when:
-    - inventory_hostname in groups['zk']
-    - groups['zk']|length > 1
-  notify: restart zookeeper
+# Core installation and configuration
+- name: Zookeeper installation
+  import_tasks: install.yml
 
 - name: Configure Zookeeper
-  template:
-    src: zoo.cfg.j2
-    dest: /opt/zookeeper/conf/zoo.cfg
-    owner: "{{ kafka_user }}"
-    group: "{{ kafka_group }}"
-    mode: '0644'
-    backup: true
-  notify: restart zookeeper
-
-- name: Configure Zookeeper logging
-  template:
-    src: log4j.properties.j2
-    dest: /opt/zookeeper/conf/log4j.properties
-    owner: "{{ kafka_user }}"
-    group: "{{ kafka_group }}"
-    mode: '0644'
-  notify: restart zookeeper
-
-- name: Create Zookeeper systemd service
-  template:
-    src: zookeeper.service.j2
-    dest: /etc/systemd/system/zookeeper.service
-    mode: '0644'
-  notify:
-    - reload systemd
-    - restart zookeeper
+  include_tasks: configure.yml
 
 - name: Start and enable Zookeeper
   systemd:
