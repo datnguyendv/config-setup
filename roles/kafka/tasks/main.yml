@@ -1,67 +1,10 @@
 ---
-- name: Create Kafka directories
-  file:
-    path: "{{ item }}"
-    state: directory
-    owner: "{{ kafka_user }}"
-    group: "{{ kafka_group }}"
-    mode: '0755'
-  loop:
-    - /opt/kafka
-    - "{{ kafka_data_dir }}"
-    - "{{ kafka_log_dir }}"
+# Core installation and configuration
+- name: Kafka installation
+  import_tasks: install.yml
 
-- name: Download Kafka
-  get_url:
-    url: "https://dlcdn.apache.org/kafka/{{ kafka_version.split('-')[1] }}/kafka_{{ kafka_version }}.tgz"
-    dest: "/tmp/kafka_{{ kafka_version }}.tgz"
-    mode: '0644'
-    timeout: 300
-
-- name: Extract Kafka
-  unarchive:
-    src: "/tmp/kafka_{{ kafka_version }}.tgz"
-    dest: /opt/kafka
-    remote_src: true
-    owner: "{{ kafka_user }}"
-    group: "{{ kafka_group }}"
-    extra_opts: [--strip-components=1]
-    creates: /opt/kafka/bin/kafka-server-start.sh
-
-- name: Configure Kafka server properties
-  template:
-    src: server.properties.j2
-    dest: /opt/kafka/config/server.properties
-    owner: "{{ kafka_user }}"
-    group: "{{ kafka_group }}"
-    mode: '0644'
-    backup: true
-  notify: restart kafka
-
-- name: Configure Kafka log4j properties
-  template:
-    src: log4j.properties.j2
-    dest: /opt/kafka/config/log4j.properties
-    owner: "{{ kafka_user }}"
-    group: "{{ kafka_group }}"
-    mode: '0644'
-  notify: restart kafka
-
-- name: Create Kafka systemd service
-  template:
-    src: kafka.service.j2
-    dest: /etc/systemd/system/kafka.service
-    mode: '0644'
-  notify:
-    - reload systemd
-    - restart kafka
-
-- name: Start and enable Kafka
-  systemd:
-    name: kafka
-    state: started
-    enabled: true
-    daemon_reload: true
+- name: Configure Kafka
+  include_tasks: configure.yml
 
 # - name: Wait for Kafka to be ready
 #   wait_for:
