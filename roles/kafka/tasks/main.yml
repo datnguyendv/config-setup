@@ -4,7 +4,11 @@
   import_tasks: install.yml
 
 - name: Configure Kafka
-  include_tasks: configure.yml
+  include_tasks: kafka_configure.yml
+
+- name: Configure Kraft
+  include_tasks: kraft_configure.yml
+  when: kafka_mode == "kraft"
 
 # - name: Wait for Kafka to be ready
 #   wait_for:
@@ -12,6 +16,13 @@
 #     host: "{{ ansible_host }}"
 #     delay: 15
 #     timeout: 120
+
+- name: Start and enable Kafka
+  systemd:
+    name: kafka
+    state: started
+    enabled: true
+    daemon_reload: true
 
 - name: Verify Kafka is running
   command: /opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:{{ kafka_port }}

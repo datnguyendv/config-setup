@@ -1,0 +1,17 @@
+---
+- name: Generate cluster UUID (run once)
+  shell: "{{ kafka_home }}/bin/kafka-storage.sh random-uuid"
+  register: kafka_cluster_uuid
+  run_once: true
+  delegate_to: "{{ groups['kraft'][0] }}"
+
+- name: Set cluster UUID fact (share to all hosts)
+  set_fact:
+    cluster_uuid: "{{ hostvars[groups['kraft'][0]].kafka_cluster_uuid.stdout }}"
+
+  # 2. Format storage directories on every node
+- name: Format log directories
+  shell: "{{ kafka_home }}/bin/kafka-storage.sh format -t {{ cluster_uuid }} -c {{ kafka_config_path }}/server.properties"
+  args:
+    creates: "{{ kafka_data_dir }}/meta.properties"
+  when: cluster_uuid is defined

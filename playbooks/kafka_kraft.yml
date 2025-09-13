@@ -5,14 +5,14 @@
   gather_facts: true
   roles:
     - kafka-kraft
-  
+
   pre_tasks:
     - name: Update package cache (Debian)
       apt:
         update_cache: true
         cache_valid_time: 3600
       when: ansible_os_family == "Debian"
-      
+ 
     - name: Update package cache (RedHat)
       yum:
         update_cache: true
@@ -24,7 +24,7 @@
       register: kafka_cluster_uuid
       run_once: true
       delegate_to: "{{ groups['kraft'] }}"
-      
+  
     - name: Format log directories
       shell: "{{ kafka_home }}/bin/kafka-storage.sh format -t {{ hostvars[groups['kraft']]['kafka_cluster_uuid']['stdout'] }} -c {{ kafka_config_path }}/server.properties"
       args:

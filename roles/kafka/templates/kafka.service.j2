@@ -2,7 +2,7 @@
 Description=Apache Kafka
 Documentation=https://kafka.apache.org/
 
-{% if groups['zk'] | default([]) | length > 0 %}
+{% if kafka_mode == "zookeeper" %}
 Requires=network.target zookeeper.service
 After=network.target zookeeper.service
 {% else %}

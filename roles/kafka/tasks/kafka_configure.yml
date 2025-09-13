@@ -26,10 +26,3 @@
   notify:
     - reload systemd
     - restart kafka
-
-- name: Start and enable Kafka
-  systemd:
-    name: kafka
-    state: started
-    enabled: true
-    daemon_reload: true
