@@ -1,0 +1,32 @@
+---
+- name: Deploy Kafka KRaft Cluster
+  hosts: kraft,kfk
+  become: true
+  gather_facts: true
+  roles:
+    - kafka-kraft
+  
+  pre_tasks:
+    - name: Update package cache (Debian)
+      apt:
+        update_cache: true
+        cache_valid_time: 3600
+      when: ansible_os_family == "Debian"
+      
+    - name: Update package cache (RedHat)
+      yum:
+        update_cache: true
+      when: ansible_os_family == "RedHat"
+
+  post_tasks:
+    - name: Generate cluster UUID (run once)
+      shell: "{{ kafka_home }}/bin/kafka-storage.sh random-uuid"
+      register: kafka_cluster_uuid
+      run_once: true
+      delegate_to: "{{ groups['kraft'] }}"
+      
+    - name: Format log directories
+      shell: "{{ kafka_home }}/bin/kafka-storage.sh format -t {{ hostvars[groups['kraft']]['kafka_cluster_uuid']['stdout'] }} -c {{ kafka_config_path }}/server.properties"
+      args:
+        creates: "{{ kafka_data_dir }}/meta.properties"
+      when: kafka_cluster_uuid is defined
