@@ -2,7 +2,7 @@
 - name: Configure Kafka server properties
   template:
     src: server.properties.j2
-    dest: /opt/kafka/config/server.properties
+    dest: "{{ kafka_home }}/config/server.properties"
     owner: "{{ kafka_user }}"
     group: "{{ kafka_group }}"
     mode: '0644'
@@ -12,7 +12,7 @@
 - name: Configure Kafka log4j properties
   template:
     src: log4j.properties.j2
-    dest: /opt/kafka/config/log4j.properties
+    dest: "{{ kafka_home }}/config/log4j.properties"
     owner: "{{ kafka_user }}"
     group: "{{ kafka_group }}"
     mode: '0644'

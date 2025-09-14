@@ -7,7 +7,6 @@
     group: "{{ kafka_group }}"
     mode: '0755'
   loop:
-    - /opt/kafka
     - "{{ kafka_data_dir }}"
     - "{{ kafka_log_dir }}"
 
@@ -21,9 +20,9 @@
 - name: Extract Kafka
   unarchive:
     src: "/tmp/kafka_{{ kafka_version }}.tgz"
-    dest: /opt/kafka
+    dest: "{{ kafka_home }}"
     remote_src: true
     owner: "{{ kafka_user }}"
     group: "{{ kafka_group }}"
     extra_opts: [--strip-components=1]
-    creates: /opt/kafka/bin/kafka-server-start.sh
+    creates: "{{ kafka_home }}/bin/kafka-server-start.sh"

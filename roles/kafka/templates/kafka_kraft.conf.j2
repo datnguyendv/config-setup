@@ -4,6 +4,7 @@ node.id={{ kafka_node_id }}
 controller.quorum.voters={% for host in groups['kraft'] %}
 {{ hostvars[host].kafka_node_id }}@{{ hostvars[host].ansible_default_ipv4.address }}:9093{% if not loop.last %},{% endif %}
 {% endfor %}
+
 controller.listener.names=CONTROLLER
 
 {% if 'controller' in kafka_roles and 'broker' in kafka_roles %}

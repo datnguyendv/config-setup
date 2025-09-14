@@ -23,6 +23,6 @@ cluster: done
 
 kafka:
 
-with zookeeper: need to test
+with zookeeper: done
 
-with kraft: need to test
+with kraft: done setup(need to test)

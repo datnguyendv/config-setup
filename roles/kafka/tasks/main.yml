@@ -25,7 +25,7 @@
     daemon_reload: true
 
 - name: Verify Kafka is running
-  command: /opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:{{ kafka_port }}
+  command: "{{ kafka_home }}/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:{{ kafka_port }}"
   register: kafka_status
   changed_when: false
   retries: 2

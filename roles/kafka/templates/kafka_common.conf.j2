@@ -1,12 +1,10 @@
 ############################# Socket Server Settings #############################
-num.network.threads={{ kafka_num_network_threads }}
-num.io.threads={{ kafka_num_io_threads }}
 socket.send.buffer.bytes={{ kafka_socket_send_buffer_bytes }}
 socket.receive.buffer.bytes={{ kafka_socket_receive_buffer_bytes }}
 socket.request.max.bytes={{ kafka_socket_request_max_bytes }}
 
 ############################# Log Basics #############################
-log.dirs={{ kafka_data_dir }}
+log.dirs={{ kafka_log_dir }}
 log.retention.hours={{ kafka_log_retention_hours }}
 log.segment.bytes={{ kafka_log_segment_bytes }}
 log.retention.check.interval.ms={{ kafka_log_retention_check_interval_ms }}
