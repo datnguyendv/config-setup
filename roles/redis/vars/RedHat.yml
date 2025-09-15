@@ -1,0 +1,20 @@
+---
+redis_package_manager: yum
+redis_packages:
+  - redis
+  - redis-tools
+
+redis_service_name: redis
+redis_conf_path: "/etc/redis.conf"
+redis_sentinel_conf_path: "/etc/redis-sentinel.conf"
+
+# EPEL repository for Redis
+redis_enable_epel: yes
+redis_epel_repo: "epel-release"
+
+# Redis user/group (created by package)
+redis_system_user: redis
+redis_system_group: redis
+
+# Systemd service file
+redis_systemd_override_dir: "/etc/systemd/system/redis.service.d"

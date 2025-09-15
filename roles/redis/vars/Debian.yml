@@ -1,0 +1,20 @@
+---
+redis_package_manager: apt
+redis_packages:
+  - redis-server
+  - redis-tools
+
+redis_service_name: redis-server
+redis_conf_path: "/etc/redis/redis.conf"
+redis_sentinel_conf_path: "/etc/redis/sentinel.conf"
+
+# Repository configuration
+redis_apt_repository: "ppa:redislabs/redis"
+redis_apt_key_url: "https://packages.redis.io/gpg"
+
+# Redis user/group (created by package)
+redis_system_user: redis
+redis_system_group: redis
+
+# Systemd service file
+redis_systemd_override_dir: "/etc/systemd/system/redis-server.service.d"

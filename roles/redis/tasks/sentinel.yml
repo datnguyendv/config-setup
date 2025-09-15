@@ -1,0 +1,35 @@
+---
+- name: Install Redis Sentinel configuration
+  template:
+    src: redis-sentinel.conf.j2
+    dest: "{{ redis_sentinel_conf_path }}"
+    owner: "{{ redis_user }}"
+    group: "{{ redis_group }}"
+    mode: '0640'
+    backup: true
+  notify: restart redis sentinel
+
+- name: Create Sentinel systemd service
+  template:
+    src: redis-sentinel.service.j2
+    dest: /etc/systemd/system/redis-sentinel.service
+    mode: '0644'
+  notify:
+    - reload systemd
+    - restart redis sentinel
+
+- name: Start and enable Redis Sentinel
+  systemd:
+    name: redis-sentinel
+    state: started
+    enabled: true
+    daemon_reload: true
+
+- name: Verify Sentinel is monitoring master
+  command: >
+    redis-cli -h 127.0.0.1 -p {{ redis_sentinel_port }} 
+    SENTINEL masters
+  register: sentinel_masters
+  changed_when: false
+  retries: 3
+  delay: 5

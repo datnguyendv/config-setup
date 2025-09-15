@@ -1,0 +1,22 @@
+---
+- name: Deploy Redis with different deployment modes
+  hosts: redis
+  become: true
+  gather_facts: true
+
+  vars:
+    # Deployment mode: standalone, replication, sentinel, cluster
+    redis_deployment_mode: "{{ deployment_mode | default('standalone') }}"
+
+  pre_tasks:
+    - name: Debug deployment mode
+      debug:
+        msg: "Deploying Redis in {{ redis_deployment_mode }} mode"
+
+    - name: Validate deployment mode
+      fail:
+        msg: "Invalid deployment mode. Must be one of: standalone, replication, sentinel, cluster"
+      when: redis_deployment_mode not in ['standalone', 'replication', 'sentinel', 'cluster']
+
+  roles:
+    - redis

@@ -1,0 +1,10 @@
+---
+# Load OS-specific variables
+
+# Common Redis packages
+redis_common_packages:
+  - redis-server
+  - redis-tools
+
+# Service management
+redis_systemd_service: yes

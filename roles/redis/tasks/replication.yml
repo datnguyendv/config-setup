@@ -1,0 +1,43 @@
+---
+- name: Configure Redis replica
+  template:
+    src: redis-replica.conf.j2
+    dest: "{{ redis_conf_path }}"
+    owner: "{{ redis_user }}"
+    group: "{{ redis_group }}"
+    mode: '0640'
+    backup: true
+  when: inventory_hostname != groups['redis_master']
+  notify: restart redis
+
+- name: Configure Redis master
+  template:
+    src: redis.conf.j2
+    dest: "{{ redis_conf_path }}"
+    owner: "{{ redis_user }}"
+    group: "{{ redis_group }}"
+    mode: '0640'
+    backup: true
+  when: inventory_hostname == groups['redis_master']
+  notify: restart redis
+
+- name: Start Redis master first
+  systemd:
+    name: "{{ redis_service_name }}"
+    state: started
+    enabled: true
+  when: inventory_hostname == groups['redis_master']
+
+- name: Wait for master to be ready
+  wait_for:
+    host: "{{ groups['redis_master'] }}"
+    port: "{{ redis_port }}"
+    timeout: 30
+  when: inventory_hostname != groups['redis_master']
+
+- name: Start Redis replicas
+  systemd:
+    name: "{{ redis_service_name }}"
+    state: started
+    enabled: true
+  when: inventory_hostname != groups['redis_master']

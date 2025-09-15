@@ -1,0 +1,31 @@
+---
+# Load OS-specific variables
+- name: Include OS-specific variables
+  include_vars: "{{ ansible_os_family }}.yml"
+  failed_when: ansible_os_family not in ['Debian', 'RedHat']
+
+- name: Install Redis
+  include_tasks: install.yml
+
+- name: Configure Redis based on deployment mode
+  include_tasks: configure.yml
+
+- name: Setup standalone Redis
+  include_tasks: standalone.yml
+  when: redis_deployment_mode == 'standalone'
+
+- name: Setup Redis replication
+  include_tasks: replication.yml
+  when: redis_deployment_mode == 'replication'
+
+- name: Setup Redis Sentinel
+  include_tasks: sentinel.yml
+  when: redis_deployment_mode == 'sentinel'
+
+- name: Start and enable Redis service
+  systemd:
+    name: "{{ redis_service_name }}"
+    state: started
+    enabled: true
+    daemon_reload: true
+  notify: restart redis

@@ -1,0 +1,19 @@
+---
+- name: Ensure Redis is configured for standalone mode
+  lineinfile:
+    path: "{{ redis_conf_path }}"
+    regexp: "{{ item.regexp }}"
+    line: "{{ item.line }}"
+    backup: true
+  loop:
+    - { regexp: '^# replicaof', line: '# replicaof <masterip> <masterport>' }
+    - { regexp: '^replicaof', line: '# replicaof <masterip> <masterport>' }
+    - { regexp: '^# slaveof', line: '# slaveof <masterip> <masterport>' }
+    - { regexp: '^slaveof', line: '# slaveof <masterip> <masterport>' }
+  notify: restart redis
+
+- name: Start Redis in standalone mode
+  systemd:
+    name: "{{ redis_service_name }}"
+    state: started
+    enabled: true

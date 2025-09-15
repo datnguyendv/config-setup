@@ -1,0 +1,26 @@
+---
+- name: restart redis
+  systemd:
+    name: "{{ redis_service_name }}"
+    state: restarted
+    daemon_reload: true
+
+- name: restart redis sentinel
+  systemd:
+    name: redis-sentinel
+    state: restarted
+    daemon_reload: true
+
+- name: reload systemd
+  systemd:
+    daemon_reload: true
+
+- name: stop redis
+  systemd:
+    name: "{{ redis_service_name }}"
+    state: stopped
+
+- name: start redis
+  systemd:
+    name: "{{ redis_service_name }}"
+    state: started
