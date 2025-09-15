@@ -1,0 +1,23 @@
+############################# Socket Server Settings #############################
+socket.send.buffer.bytes={{ kafka_socket_send_buffer_bytes }}
+socket.receive.buffer.bytes={{ kafka_socket_receive_buffer_bytes }}
+socket.request.max.bytes={{ kafka_socket_request_max_bytes }}
+
+############################# Log Basics #############################
+log.dirs={{ kafka_log_dir }}
+log.retention.hours={{ kafka_log_retention_hours }}
+log.segment.bytes={{ kafka_log_segment_bytes }}
+log.retention.check.interval.ms={{ kafka_log_retention_check_interval_ms }}
+
+############################# Topic Defaults #############################
+num.partitions={{ kafka_num_partitions }}
+default.replication.factor={{ kafka_default_replication_factor }}
+min.insync.replicas={{ kafka_min_insync_replicas }}
+auto.create.topics.enable={{ kafka_auto_create_topics | lower }}
+
+############################# JMX #############################
+jmx.port={{ kafka_jmx_port }}
+
+############################# Performance Settings #############################
+replica.fetch.max.bytes=1048576
+message.max.bytes=1000000

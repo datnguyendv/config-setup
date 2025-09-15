@@ -1,0 +1,23 @@
+############################# KRaft Mode #############################
+process.roles={{ kafka_roles }}
+node.id={{ kafka_node_id }}
+controller.quorum.voters={% for host in groups['kraft'] %}
+{{ hostvars[host].kafka_node_id }}@{{ hostvars[host].ansible_default_ipv4.address }}:9093{% if not loop.last %},{% endif %}
+{% endfor %}
+
+controller.listener.names=CONTROLLER
+
+{% if 'controller' in kafka_roles and 'broker' in kafka_roles %}
+listeners=PLAINTEXT://0.0.0.0:{{ kafka_port }},CONTROLLER://0.0.0.0:{{ kafka_controller_port }}
+advertised.listeners=PLAINTEXT://{{ ansible_default_ipv4.address }}:{{ kafka_port }}
+{% elif 'controller' in kafka_roles %}
+listeners=CONTROLLER://0.0.0.0:{{ kafka_controller_port }}
+{% else %}
+listeners=PLAINTEXT://0.0.0.0:{{ kafka_port }}
+advertised.listeners=PLAINTEXT://{{ ansible_default_ipv4.address }}:{{ kafka_port }}
+{% endif %}
+
+listener.security.protocol.map=PLAINTEXT:PLAINTEXT,CONTROLLER:PLAINTEXT
+inter.broker.listener.name=PLAINTEXT
+
+metadata.log.dir={{ kafka_meta_dir }}

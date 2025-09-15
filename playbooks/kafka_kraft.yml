@@ -1,0 +1,13 @@
+---
+- name: Install and configure Kafka cluster with Zookeeper
+  hosts: all
+  become: true
+  gather_facts: true
+  roles:
+    - kafka-common
+
+- name: Configure Kafka cluster
+  hosts: kraft, kfk
+  become: true
+  roles:
+    - kafka

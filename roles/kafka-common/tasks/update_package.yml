@@ -19,5 +19,5 @@
     path: /etc/hosts
     line: "{{ hostvars[item]['ansible_default_ipv4']['address'] }} {{ hostvars[item]['hostname'] | default(item) }}"
     regexp: ".*{{ item }}$"
-  loop: "{{ (groups['zk'] + groups['kfk']) | unique }}"
+  loop: "{{ (groups.get('zk', []) + groups.get('kfk', []) + groups.get('kraft', [])) | unique }}"
   when: hostvars[item]['hostname'] is defined

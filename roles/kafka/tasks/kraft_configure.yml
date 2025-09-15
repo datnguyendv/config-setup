@@ -1,0 +1,33 @@
+---
+- name: Generate cluster UUID (run once)
+  shell: "{{ kafka_home }}/bin/kafka-storage.sh random-uuid"
+  register: kafka_cluster_uuid
+  run_once: true
+  delegate_to: "{{ groups['kraft'][0] }}"
+
+- name: set cluster uuid fact (share to all hosts)
+  set_fact:
+    cluster_uuid: "{{ hostvars[groups['kraft'][0]].kafka_cluster_uuid.stdout }}"
+
+- name: Debug print cluster UUID
+  ansible.builtin.debug:
+    msg: "Cluster UUID của node {{ inventory_hostname }} là: {{ cluster_uuid }}"
+
+  # 2. Format storage directories on every node
+- name: Format log directories
+  shell: "{{ kafka_home }}/bin/kafka-storage.sh format -t {{ cluster_uuid }} -c {{ kafka_config_path }}/server.properties"
+  args:
+    creates: "{{ kafka_log_dir }}/meta.properties"
+  when: cluster_uuid is defined
+
+- name: Grant Kafka permission
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ kafka_user }}"
+    group: "{{ kafka_group }}"
+    mode: '0755'
+    recurse: true
+  loop:
+    - "{{ kafka_data_dir }}"
+    - "{{ kafka_log_dir }}"

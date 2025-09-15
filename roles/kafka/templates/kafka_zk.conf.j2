@@ -1,0 +1,8 @@
+############################# Zookeeper Mode #############################
+broker.id={{ broker_id }}
+listeners=PLAINTEXT://0.0.0.0:{{ kafka_port }}
+advertised.listeners=PLAINTEXT://{{ ansible_default_ipv4.address }}:{{ kafka_port }}
+
+zookeeper.connect={% for host in groups['zk'] %}
+{{ hostvars[host]['hostname'] }}:{{ zookeeper_port }}{% if not loop.last %},{% endif %}{% endfor %}
+zookeeper.connection.timeout.ms=18000
