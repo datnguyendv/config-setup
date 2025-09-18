@@ -1,19 +1,23 @@
 ---
-- name: Ensure Redis is configured for standalone mode
-  lineinfile:
-    path: "{{ redis_conf_path }}"
-    regexp: "{{ item.regexp }}"
-    line: "{{ item.line }}"
-    backup: true
-  loop:
-    - { regexp: '^# replicaof', line: '# replicaof <masterip> <masterport>' }
-    - { regexp: '^replicaof', line: '# replicaof <masterip> <masterport>' }
-    - { regexp: '^# slaveof', line: '# slaveof <masterip> <masterport>' }
-    - { regexp: '^slaveof', line: '# slaveof <masterip> <masterport>' }
+- name: Generate Redis standalone configuration
+  template:
+    src: redis.conf.j2
+    dest: "{{ redis_config_dir }}/redis.conf"
+    owner: "{{ redis_user }}"
+    group: "{{ redis_group }}"
+    mode: '0640'
+    backup: yes
   notify: restart redis
 
-- name: Start Redis in standalone mode
-  systemd:
-    name: "{{ redis_service_name }}"
-    state: started
-    enabled: true
+- name: Ensure Redis is configured for standalone mode
+  lineinfile:
+    path: "{{ redis_config_dir }}/redis.conf"
+    regexp: "^cluster-enabled"
+    state: absent
+  notify: restart redis
+
+- name: Verify Redis standalone configuration
+  command: redis-server --test-config -f {{ redis_config_dir }}/redis.conf
+  register: redis_config_test
+  failed_when: redis_config_test.rc != 0
+  changed_when: false

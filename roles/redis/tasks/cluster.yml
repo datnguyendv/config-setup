@@ -1,0 +1,56 @@
+---
+- name: Validate cluster configuration
+  fail:
+    msg: "redis_cluster_nodes must be defined for cluster mode"
+  when: redis_cluster_nodes | length == 0
+
+- name: Validate minimum cluster nodes
+  fail:
+    msg: "Redis cluster requires at least 3 nodes"
+  when: redis_cluster_nodes | length < 3
+
+- name: Generate Redis cluster configuration
+  template:
+    src: redis-cluster.conf.j2
+    dest: "{{ redis_config_dir }}/redis.conf"
+    owner: "{{ redis_user }}"
+    group: "{{ redis_group }}"
+    mode: '0640'
+    backup: yes
+  notify: restart redis
+
+- name: Create cluster nodes configuration file directory
+  file:
+    path: "{{ redis_cluster_config_file | dirname }}"
+    state: directory
+    owner: "{{ redis_user }}"
+    group: "{{ redis_group }}"
+    mode: '0755'
+
+- name: Verify Redis cluster configuration
+  command: redis-server --test-config -f {{ redis_config_dir }}/redis.conf
+  register: redis_config_test
+  failed_when: redis_config_test.rc != 0
+  changed_when: false
+
+- name: Wait for Redis service to be ready
+  wait_for:
+    port: "{{ redis_port }}"
+    host: "{{ redis_bind }}"
+    timeout: 30
+
+- name: Create Redis cluster (run only once)
+  command: >
+    redis-cli --cluster create
+    {% for node in redis_cluster_nodes %}
+    {{ node.host }}:{{ node.port }}
+    {% endfor %}
+    --cluster-replicas 1 --cluster-yes
+  run_once: true
+  delegate_to: "{{ redis_cluster_nodes[0].host }}"
+  register: cluster_creation
+  failed_when: 
+    - cluster_creation.rc != 0
+    - "'Node' not in cluster_creation.stderr"
+    - "'already' not in cluster_creation.stderr"
+  when: inventory_hostname == redis_cluster_nodes[0].host

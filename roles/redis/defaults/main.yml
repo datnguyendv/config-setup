@@ -1,47 +1,49 @@
 ---
-# Redis deployment configuration
-redis_deployment_mode: standalone
+# Redis deployment mode: standalone hoặc cluster
+redis_deployment_mode: "standalone"
+
+# Redis version
 redis_version: "7.0"
+
+# Basic Redis configuration
 redis_port: 6379
 redis_bind: "127.0.0.1"
-redis_password: ""
+redis_requirepass: ""
 redis_maxmemory: "256mb"
 redis_maxmemory_policy: "allkeys-lru"
 
-# Redis directories
-redis_dir: "/var/lib/redis"
-redis_conf_dir: "/etc/redis"
+# Directories
+redis_config_dir: "/etc/redis"
+redis_data_dir: "/var/lib/redis"
 redis_log_dir: "/var/log/redis"
-redis_pid_file: "/var/run/redis/redis-server.pid"
+redis_pid_dir: "/var/run/redis"
 
-# Service configuration
-redis_service_name: "redis-server"
+# Redis user and group
 redis_user: "redis"
 redis_group: "redis"
 
-# Replication settings (for master-slave mode)
-redis_master_ip: ""
-redis_replica_priority: 100
-redis_replica_read_only: yes
+# Cluster specific configuration
+redis_cluster_enabled: "{{ true if redis_deployment_mode == 'cluster' else false }}"
+redis_cluster_config_file: "{{ redis_config_dir }}/nodes.conf"
+redis_cluster_node_timeout: 15000
+redis_cluster_require_full_coverage: "no"
 
-# Sentinel settings
-redis_sentinel_port: 26379
-redis_sentinel_master_name: "mymaster"
-redis_sentinel_quorum: 2
-redis_sentinel_down_after: 30000
-redis_sentinel_failover_timeout: 180000
-redis_sentinel_parallel_syncs: 1
+# List of cluster nodes (required for cluster mode)
+redis_cluster_nodes: []
+#  - { host: "192.168.1.10", port: 6379 }
+#  - { host: "192.168.1.11", port: 6379 }
+#  - { host: "192.168.1.12", port: 6379 }
 
-# Security
-redis_protected_mode: yes
-redis_tcp_keepalive: 300
+# Package names per OS family
+redis_packages:
+  RedHat:
+    - redis
+    - python3-redis
+  Debian:
+    - redis-server
+    - python3-redis
 
-# Performance tuning
-redis_tcp_backlog: 511
-redis_timeout: 0
-redis_databases: 16
-redis_save:
-  - "900 1"
-  - "300 10"
-  - "60 10000"
-redis_os_family: "{{ ansible_os_family }}"
+# Service names per OS family
+redis_service_name:
+  RedHat: "redis"
+  Debian: "redis-server"

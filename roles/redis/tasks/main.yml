@@ -4,28 +4,57 @@
   include_vars: "{{ ansible_os_family }}.yml"
   failed_when: ansible_os_family not in ['Debian', 'RedHat']
 
-- name: Install Redis
-  include_tasks: install.yml
+- name: Install Redis packages (RedHat/CentOS)
+  yum:
+    name: "{{ redis_packages[ansible_os_family] }}"
+    state: present
+  when: ansible_os_family == "RedHat"
 
-- name: Configure Redis based on deployment mode
-  include_tasks: configure.yml
+- name: Install Redis packages (Debian/Ubuntu)
+  apt:
+    name: "{{ redis_packages[ansible_os_family] }}"
+    state: present
+    update_cache: true
+  when: ansible_os_family == "Debian"
 
-- name: Setup standalone Redis
+- name: Create redis user
+  user:
+    name: "{{ redis_user }}"
+    group: "{{ redis_group }}"
+    system: true
+    shell: /bin/false
+    home: "{{ redis_data_dir }}"
+    create_home: false
+
+- name: Create redis directories
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: "{{ redis_user }}"
+    group: "{{ redis_group }}"
+    mode: '0755'
+  loop:
+    - "{{ redis_config_dir }}"
+    - "{{ redis_data_dir }}"
+    - "{{ redis_log_dir }}"
+    - "{{ redis_pid_dir }}"
+
+- name: Check deployment mode
+  debug:
+    msg: "Deploying Redis in {{ redis_deployment_mode }} mode"
+
+- name: Deploy Redis in standalone mode
   include_tasks: standalone.yml
-  when: redis_deployment_mode == 'standalone'
+  when: redis_deployment_mode == "standalone"
 
-- name: Setup Redis replication
-  include_tasks: replication.yml
-  when: redis_deployment_mode == 'replication'
+- name: Deploy Redis in cluster mode
+  include_tasks: cluster.yml
+  when: redis_deployment_mode == "cluster"
 
-- name: Setup Redis Sentinel
-  include_tasks: sentinel.yml
-  when: redis_deployment_mode == 'sentinel'
-
-- name: Start and enable Redis service
+- name: Enable and start Redis service
   systemd:
-    name: "{{ redis_service_name }}"
-    state: started
+    name: "{{ redis_service_name[ansible_os_family] }}"
     enabled: true
+    state: started
     daemon_reload: true
   notify: restart redis

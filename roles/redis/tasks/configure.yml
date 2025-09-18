@@ -3,7 +3,7 @@
   systemd:
     name: "{{ redis_service_name }}"
     state: stopped
-  ignore_errors: yes
+  ignore_errors: true
 
 - name: Generate Redis configuration
   template:
@@ -12,7 +12,7 @@
     owner: "{{ redis_user }}"
     group: "{{ redis_group }}"
     mode: '0640'
-    backup: yes
+    backup: true
   notify: restart redis
 
 - name: Set Redis directory permissions
